@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+cython
+glog
+pyyaml
+shapely
