@@ -1,6 +1,4 @@
-# Soccer On Your Tabletop
-
-This code is the first system that "upconverts" a YouTube soccer video to 3D.
+# Soccer On Your Tabletop [Project Page](grail.cs.washington.edu/projects/soccer/)
 
 -----------------
 
