@@ -14,4 +14,6 @@ cd build
 cmake ..
 make -j4
 mv instancesegm ../
+cd ..
+rm -rf build
 cd ${cur}
