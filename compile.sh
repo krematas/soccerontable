@@ -1,3 +1,9 @@
+cur=$PWD
 cd utils/nms
 make
-cd ../../
+cd ${cur}
+
+cd utils/cocoapi/PythonAPI
+make
+cd ${cur}
+

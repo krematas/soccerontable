@@ -5,3 +5,4 @@ cython
 glog
 pyyaml
 shapely
+tqdm

@@ -27,9 +27,13 @@ Visualization tools
   - Hololens VS Solution
 
 ### Dependencies ###
-Install
+These are the non "pip3 install" dependencies:
 - [Detectron](https://github.com/facebookresearch/Detectron) for detection and (instance) segmentation.
 - [OpenPose](https://github.com/CMU-Perceptual-Computing-Lab/openpose) for the players' pose estimation.
+- [OpenCV 3.1](https://github.com/opencv/opencv) + [OpenCV_contrib](https://github.com/opencv/opencv_contrib) for image loading/edge estimation etc. I followed [this](https://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/) guide and it worked fine.
+- [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) for the instance segmentation
+- Boost
+- CMake
 
 
 -----------------
