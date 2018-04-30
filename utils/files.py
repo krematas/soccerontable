@@ -3,7 +3,7 @@ import socket
 import numpy as np
 import glog
 
-__all__ = ['extract_basename', 'extract_path', 'get_platform_datadir', 'get_dataset_info', 'gen_folder_structure']
+__all__ = ['extract_basename', 'extract_path', 'get_dataset_info', 'gen_folder_structure']
 
 
 def extract_basename(filename):
@@ -18,55 +18,11 @@ def extract_path(filename):
     return path
 
 
-def get_platform():
-    if socket.gethostname() == 'karmeliet.cs.washington.edu':
-        platform_name = 'karmeliet'
-    elif socket.gethostname() == 'flatwhite.cs.washington.edu':
-        platform_name = 'flatwhite'
-    else:
-        platform_name = 'mac'
-
-    return platform_name
-
-
 def mkdir(path_to_dir):
     if not os.path.exists(path_to_dir):
         os.mkdir(path_to_dir)
     else:
         glog.warning('Dir {0} already exist.'.format(path_to_dir))
-
-
-def get_platform_datadir(data_dir='play_for_data'):
-    if socket.gethostname() == 'karmeliet.cs.washington.edu':
-        path_to_data = os.path.join('/home/krematas/Mountpoints/grail/data/', data_dir)
-    elif socket.gethostname() == 'flatwhite.cs.washington.edu':
-        path_to_data = os.path.join('/projects/grail/krematas/data/', data_dir)
-    else:
-        path_to_data = os.path.join('/Users/krematas/data/', data_dir)
-
-    return path_to_data
-
-
-def get_platform_codedir():
-    if socket.gethostname() == 'karmeliet.cs.washington.edu':
-        path_to_code = '/home/krematas/code/'
-    elif socket.gethostname() == 'flatwhite.cs.washington.edu':
-        path_to_code = '/homes/grail/krematas/code/'
-    else:
-        path_to_code = '/Users/krematas/code/'
-
-    return path_to_code
-
-
-def get_platform_homedir():
-    if socket.gethostname() == 'karmeliet.cs.washington.edu':
-        path_to_home = '/home/krematas/'
-    elif socket.gethostname() == 'flatwhite.cs.washington.edu':
-        path_to_home = '/homes/grail/krematas/'
-    else:
-        path_to_home = '/Users/krematas/'
-
-    return path_to_home
 
 
 def get_dataset_info(path_to_dataset, info_file='info.txt'):

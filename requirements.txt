@@ -6,3 +6,4 @@ glog
 pyyaml
 shapely
 tqdm
+glog

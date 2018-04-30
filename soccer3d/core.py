@@ -4,8 +4,8 @@ from os import listdir
 from os.path import isfile, join, exists
 import utils.io as io
 from soccer3d import calibration
-from soccer3d import segmentation
-from soccer3d import tracking
+# from soccer3d import segmentation
+# from soccer3d import tracking
 import utils.misc as misc_utils
 import utils.camera as cam_utils
 import utils.draw as draw_utils
