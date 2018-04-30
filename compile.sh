@@ -4,10 +4,6 @@ cd utils/nms
 make -j4
 cd ${cur}
 
-cd utils/cocoapi/PythonAPI
-make -j4
-cd ${cur}
-
 cd soccer3d/instancesegm
 mkdir build
 cd build
