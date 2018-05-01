@@ -23,20 +23,14 @@ parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/
 parser.add_argument('--dataset', default='a6', help='path')
 
 
-parser.add_argument('--modeldir', type=str, default='/home/krematas/Mountpoints/grail/tmp/cnn/', help='model file to use')
+parser.add_argument('--modelpath', type=str, default='/home/krematas/Mountpoints/grail/tmp/cnn/model.pth', help='model file to use')
 parser.add_argument('--epoch', type=int, default=292, help='testing batch size')
-parser.add_argument('--additional_input', default='mask', help='filepostfix')
-parser.add_argument('--postfix', default='hg_estmask', help='filepostfix')
-parser.add_argument('--testBatchSize', type=int, default=6, help='testing batch size')
 parser.add_argument('--input_nc', type=int, default=4, help='input image channels')
 parser.add_argument('--output_nc', type=int, default=51, help='output image channels')
-parser.add_argument('--img_size', type=int, default=348, help='output image channels')
+parser.add_argument('--img_size', type=int, default=256, help='output image channels')
 parser.add_argument('--label_size', type=int, default=64, help='output image channels')
-parser.add_argument('--ngf', type=int, default=64, help='generator filters in first conv layer')
 parser.add_argument('--cuda', action='store_true', help='use cuda')
-parser.add_argument('--crf', action='store_true', help='use crf')
 parser.add_argument('--additional_input_type', default='estmask', choices=['estmask', 'trimap'], help='The type of addtional type to load [estmask, trimap]')
-parser.add_argument('--simple_pointcloud', action='store_true', help='Just save the estimated pointcloud')
 
 
 opt, _ = parser.parse_known_args()
@@ -59,7 +53,7 @@ if opt.cuda:
 path_to_data = opt.path_to_data
 file_utils.mkdir(join(path_to_data, 'predictions'))
 
-composed = transforms.Compose([Rescale(256, 64), ToTensor(), NormalizeImage()])
+composed = transforms.Compose([Rescale(opt.img_size, opt.label_size), ToTensor(), NormalizeImage()])
 test_set = get_set(path_to_data, nbins=opt.output_nc, transform=composed, additional_input_type=opt.additional_input_type)
 testing_data_loader = DataLoader(dataset=test_set, num_workers=8, batch_size=1, shuffle=False)
 

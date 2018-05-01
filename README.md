@@ -95,8 +95,12 @@ export OMP_NUM_THREADS=8
 ./soccer3d/instancesegm/instancesegm --path_to_data $DATADIR/players/ --thresh 1.5 --path_to_model ./soccer3d/instancesegm/model.yml.gz
 ```
 
-We combine the masks from Mask-RCNN and our pose-based optimization and we prepare the data for the network
+We combine the masks from Mask-RCNN and our pose-based optimization and
+we prepare the data for the network.
+
+The model weights can be found [here](https://drive.google.com/file/d/1QBLyoNBrFu0oYr15WECzCfOgzuAAQW7w/view?usp=sharing)
 ```
+# MODELPATH=/path/to/model/
 python3 demo/combine_masks_for_network.py --path_to_data $DATADIR --margin 25
-python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players
+python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath $MODELPATH
 ```
