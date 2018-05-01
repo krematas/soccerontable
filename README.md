@@ -104,3 +104,5 @@ The model weights can be found [here](https://drive.google.com/file/d/1QBLyoNBrF
 python3 demo/combine_masks_for_network.py --path_to_data $DATADIR --margin 25
 python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath $MODELPATH
 ```
+
+Next, tracking and converting the depthmaps to pointclouds. To be continued
