@@ -77,20 +77,8 @@ class YoutubeVideo:
         calib_file = join(self.path_to_dataset, 'metadata', 'calib.p')
         self._load_metadata(calib_file, 'calib')
 
-        bbox_coarse_file = join(self.path_to_dataset, 'metadata', 'bbox_coarse.p')
-        self._load_metadata(bbox_coarse_file, 'bbox')
-
-        seg_coarse_file = join(self.path_to_dataset, 'metadata', 'seg_coarse.p')
-        self._load_metadata(seg_coarse_file, 'mask_coarse')
-
-        bbox_fine_file = join(self.path_to_dataset, 'metadata', 'bbox_fine.p')
-        self._load_metadata(bbox_fine_file, 'bbox')
-
-        pose_coarse_file = join(self.path_to_dataset, 'metadata', 'poses_coarse.p')
+        pose_coarse_file = join(self.path_to_dataset, 'metadata', 'poses.p')
         self._load_metadata(pose_coarse_file, 'poses')
-
-        # pose_fine_file = join(self.path_to_dataset, 'metadata', 'poses_fine.p')
-        # self._load_metadata(pose_fine_file, 'poses')
 
         detectron_file = join(self.path_to_dataset, 'metadata', 'detectron.p')
         self._load_metadata(detectron_file, 'detectron')
@@ -107,28 +95,6 @@ class YoutubeVideo:
         if mask.shape[0] != self.shape[0] or mask.shape[1] != self.shape[1]:
             mask = cv2.resize(mask, (self.shape[1], self.shape[0]))
         return mask
-
-    # ------------------------------------------------------------------------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def extract_edges(self, scale=1.0):
-
-        if not exists(join(self.path_to_dataset, 'edges')):
-            os.mkdir(join(self.path_to_dataset, 'edges'))
-
-        # Check if there are edges
-        existing_edges = [f for f in listdir(join(self.path_to_dataset, 'edges'))]
-        if len(existing_edges) != self.n_frames:
-            glog.info('Estimating edges')
-            edge_bin = '/home/krematas/CLionProjects/EdgeDetection/build/EdgeDetection'
-            for basename in self.frame_basenames:
-                input_ = join(self.path_to_dataset, 'images', '{0}.{1}'.format(basename, self.ext))
-                output_ = join(self.path_to_dataset, 'edges', '{0}.jpg'.format(basename))
-                model_ = '/home/krematas/Downloads/model.yml.gz'
-                os.system('{0} -i={1} -m={2} -o={3} -s={4}'.format(edge_bin, input_, model_, output_, scale))
-                break
-
-        return 0
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -252,116 +218,9 @@ class YoutubeVideo:
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def segment_people_coarse(self, sfactor=0.5, bg_prob=0.1, compat=5, sxy=80, srgb=13):
+    def estimate_poses(self, redo=False, openpose_dir='/path/to/openpose', pad=150):
 
-        seg_coarse_file = join(self.path_to_dataset, 'metadata', 'seg_coarse.p')
-        if exists(seg_coarse_file):
-            glog.info('Loading coarse detections from: {0}'.format(seg_coarse_file))
-            with open(seg_coarse_file, 'rb') as f:
-                self.mask_coarse = pickle.load(f)
-        else:
-
-            if not exists(join(self.path_to_dataset, 'masks')):
-                os.mkdir(join(self.path_to_dataset, 'masks'))
-
-            # Check if the masks have been calculated
-            if self.file_lists_match(listdir(join(self.path_to_dataset, 'masks'))):
-                # Apply the person segmentation
-                glog.info('Applying the person segmentation')
-                file_dir = os.path.dirname(os.path.realpath(__file__))
-                os.system('bash {0}/bash_scripts/person_segmentation.sh {1} {2}'.format(file_dir, self.path_to_dataset, sfactor))
-
-            glog.info('Refining segmentations from {0}'.format(join(self.path_to_dataset, 'masks')))
-            for i, basename in enumerate(self.frame_basenames):
-                probs = np.load(join(self.path_to_dataset, 'masks', '{0}.{1}.npy'.format(basename, self.ext)))
-                probs_cnn = np.zeros((2, probs.shape[1], probs.shape[2]))
-                probs_cnn[1, :, :] = probs[1, :, :]
-                probs_cnn[0, :, :] = bg_prob
-                probs_cnn /= (np.sum(probs_cnn, axis=0))
-
-                img_ = self.get_frame(i, sfactor=sfactor, dtype=np.uint8)
-                mask = segmentation.segment_image_densecrf(img_, probs_cnn, compat=compat, sxy=sxy, srgb=srgb)
-                # mask = cv2.resize(mask, None, fx=1./sfactor, fy=1./sfactor)
-                self.mask_coarse[basename] = mask
-
-            with open(seg_coarse_file, 'wb') as f:
-                pickle.dump(self.mask_coarse, f)
-
-        return 0
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def detect_people_coarse(self, nms_thresh=0.5, score_thresh=0.25):
-
-        bbox_coarse_file = join(self.path_to_dataset, 'metadata', 'bbox_coarse.p')
-        if exists(bbox_coarse_file):
-            glog.info('Loading coarse detections from: {0}'.format(bbox_coarse_file))
-            with open(bbox_coarse_file, 'rb') as f:
-                self.bbox = pickle.load(f)
-        else:
-
-            if not exists(join(self.path_to_dataset, 'bbox')):
-                os.mkdir(join(self.path_to_dataset, 'bbox'))
-
-            # Check if the boxes have been calculated
-            if not self.file_lists_match(listdir(join(self.path_to_dataset, 'bbox'))):
-                # Apply the person detector
-                glog.info('Applying the person detector')
-                file_dir = os.path.dirname(os.path.realpath(__file__))
-                os.system('bash {0}/bash_scripts/person_detection.sh {1}'.format(file_dir, self.path_to_dataset))
-
-            # Gather the txt
-            glog.info('Getting detections from {0}'.format(join(self.path_to_dataset, 'bbox')))
-            for basename in tqdm(self.frame_basenames):
-                bbox = np.loadtxt(join(self.path_to_dataset, 'bbox', '{0}.txt'.format(basename)))
-                keep = nms(bbox.astype(np.float32), nms_thresh)
-                bbox = bbox[keep, :]
-                keep = bbox[:, 4] > score_thresh
-                bbox = bbox[keep, :]
-                self.bbox[basename] = bbox
-
-            with open(bbox_coarse_file, 'wb') as f:
-                pickle.dump(self.bbox, f)
-
-        return 0
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def detect_people_fine(self, redo=False, SCORE_THRESH=0.2, NMS_THRESH=0.2, min_height=0.2):
-
-        bbox_fine_file = join(self.path_to_dataset, 'metadata', 'bbox_fine.p')
-        if exists(bbox_fine_file) and not redo:
-            glog.info('Loading fine detections from: {0}'.format(bbox_fine_file))
-            with open(bbox_fine_file, 'rb') as f:
-                self.bbox = pickle.load(f)
-        else:
-
-            for i, basename in enumerate(tqdm(self.frame_basenames)):
-                bbox = self.bbox[basename]
-                cam_mat = self.calib[basename]
-
-                cam = cam_utils.Camera(basename, cam_mat['A'], cam_mat['R'], cam_mat['T'], self.shape[0], self.shape[1])
-
-                scores = bbox[:, -1]
-                keep = scores > SCORE_THRESH
-                bbox = bbox[keep, :]
-                keep, __ = misc_utils.putting_objects_in_perspective(cam, bbox, min_height=min_height)
-                bbox = bbox[keep, :]
-                keep = nms(bbox.astype(np.float32), NMS_THRESH)
-                bbox = bbox[keep, :]
-
-                self.bbox[basename] = bbox
-
-            with open(bbox_fine_file, 'wb') as f:
-                pickle.dump(self.bbox, f)
-
-        return 0
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def estimate_pose_coarse(self, redo=False):
-
-        pose_file_coarse = join(self.path_to_dataset, 'metadata', 'poses_coarse.p')
+        pose_file_coarse = join(self.path_to_dataset, 'metadata', 'poses.p')
         if exists(pose_file_coarse) and not redo:
             glog.info('Loading fine detections from: {0}'.format(pose_file_coarse))
             with open(pose_file_coarse, 'rb') as f:
@@ -383,8 +242,6 @@ class YoutubeVideo:
                 img = self.get_frame(i)
                 bbox = self.bbox[basename]
 
-                pad = 150
-
                 # save the crops in a temp file
                 for j in range(bbox.shape[0]):
                     x1, y1, x2, y2 = bbox[j, 0:4]
@@ -398,7 +255,7 @@ class YoutubeVideo:
                     cv2.imwrite(join(self.path_to_dataset, 'tmp', '{0}.jpg'.format(j)), crop[:, :, (2, 1, 0)] * 255)
 
                 cwd = os.getcwd()
-                os.chdir(join(file_utils.get_platform_codedir(), 'openpose'))
+                os.chdir(openpose_dir)
                 command = '{0} --model_pose COCO --image_dir {1} --write_keypoint {2} --no_display'.format(openposebin,
                                                                                                            tmp_dir,
                                                                                                            tmp_dir)
@@ -476,51 +333,6 @@ class YoutubeVideo:
             poses = [poses[ii] for ii in keep2]
             self.poses[basename] = poses
 
-    def estimate_pose_fine(self, redo=False, keypoint_thresh=10, score_thresh=0.5):
-
-        pose_file_fine = join(self.path_to_dataset, 'metadata', 'poses_fine.p')
-        if exists(pose_file_fine) and not redo:
-            glog.info('Loading fine detections from: {0}'.format(pose_file_fine))
-            with open(pose_file_fine, 'rb') as f:
-                self.poses = pickle.load(f)
-        else:
-
-            for i, basename in enumerate(tqdm(self.frame_basenames)):
-                poses = self.poses[basename]
-
-                # remove the poses with few keypoints or they
-                keep = []
-                for ii in range(len(poses)):
-                    keypoints = poses[ii]
-                    valid = (keypoints[:, 2] > 0.).nonzero()[0]
-                    score = np.sum(keypoints[valid, 2])
-
-                    if len(valid) > keypoint_thresh and score > score_thresh:
-                        keep.append(ii)
-
-                poses = [poses[ii] for ii in keep]
-
-                root_part = 1
-                root_box = []
-                for ii in range(len(poses)):
-                    root_tmp = poses[ii][root_part, :]
-                    valid_keypoints = (poses[ii][root_part, 2] > 0).nonzero()
-                    root_box.append([root_tmp[0] - 10, root_tmp[1] - 10, root_tmp[0] + 10, root_tmp[1] + 10, len(valid_keypoints)])
-                root_box = np.array(root_box)
-
-                # Perform Neck NMS
-                keep2 = nms(root_box.astype(np.float32), 0.1)
-                poses = [poses[ii] for ii in keep2]
-                self.poses[basename] = poses
-
-            with open(pose_file_fine, 'wb') as f:
-                pickle.dump(self.poses, f)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def segment_people(self):
-        pass
-
     # ------------------------------------------------------------------------------------------------------------------
 
     def file_lists_match(self, list2):
@@ -544,50 +356,6 @@ class YoutubeVideo:
         sol = tracking.track_from_poses(pose_matrix)
         self.tracks = sol
         # Plot the result
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def dump_tracking_video_mot_mac(self, mot_tracks, scale=4):
-
-        glog.info('Dumping tracking video')
-
-        if file_utils.get_platform() != 'mac':
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out_file = join(self.path_to_dataset, 'tracks_mot.mp4')
-            out = cv2.VideoWriter(out_file, fourcc, 20.0, (self.shape[1] // scale, self.shape[0] // scale))
-
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cmap = matplotlib.cm.get_cmap('hsv')
-
-        n_tracks = max(np.unique(mot_tracks[:, 1]))
-
-        for i, basename in enumerate(tqdm(self.frame_basenames)):
-            out_file = join(self.path_to_dataset, 'tmp', '{0:05d}.jpg'.format(i))
-
-            img = self.get_frame(i, dtype=np.uint8)
-
-            cur_id = mot_tracks[:, 0] - 1 == i
-            current_boxes = mot_tracks[cur_id, :]
-
-            for j in range(current_boxes.shape[0]):
-                track_id, x, y, w, h = current_boxes[j, 1:6]
-                clr = cmap(track_id / float(n_tracks))
-                cv2.rectangle(img, (int(x), int(y)), (int(x + w), int(y + h)),
-                              (clr[0] * 255, clr[1] * 255, clr[2] * 255), 10)
-                cv2.putText(img, str(int(track_id)), (int(x), int(y)), font, 2, (255, 255, 255), 2, cv2.LINE_AA)
-
-            img = cv2.resize(img, (self.shape[1] // scale, self.shape[0] // scale))
-
-            if file_utils.get_platform() != 'mac':
-                out.write(np.uint8(img[:, :, (2, 1, 0)]))
-            else:
-                cv2.imwrite(out_file, np.uint8(img[:, :, (2, 1, 0)]))
-
-        if file_utils.get_platform() != 'mac':
-            out.release()
-            cv2.destroyAllWindows()
-
-    # ------------------------------------------------------------------------------------------------------------------
 
     # ------------------------------------------------------------------------------------------------------------------
 

@@ -7,3 +7,6 @@ pyyaml
 shapely
 tqdm
 glog
+torch
+torchvision
+visdom

@@ -24,7 +24,8 @@ int main(int argc, char** argv )
     options_description desc{"Options"};
     desc.add_options()
             ("help,h", "Help screen")
-            ("path_to_dataset", value<std::string>()->default_value("./"), "Path to dataset")
+            ("path_to_data", value<std::string>()->default_value("./"), "Path to dataset")
+            ("path_to_model", value<std::string>()->default_value("./model.yml.gz"), "Path to model")
             ("extension", value<std::string>()->default_value(".jpg"), "File extension")
             ("s1", value<float>()->default_value(1.0), "Sigma1 (RGB)")
             ("s2", value<float>()->default_value(0.01), "Sigma2 (edges)")
@@ -37,7 +38,7 @@ int main(int argc, char** argv )
     if (vm.count("help"))
         std::cout << desc << '\n';
 
-    path p (vm["path_to_dataset"].as<std::string>()+"/images/");
+    path p (vm["path_to_data"].as<std::string>()+"/images/");
 
     directory_iterator end_itr;
 
@@ -79,7 +80,7 @@ int main(int argc, char** argv )
         image.copyTo(img2);
         img2.convertTo(img2, cv::DataType<var_t>::type);
         cv::Mat edges(img2.size(), img2.type());
-        cv::Ptr<StructuredEdgeDetection> pDollar = createStructuredEdgeDetection("model.yml.gz");
+        cv::Ptr<StructuredEdgeDetection> pDollar = createStructuredEdgeDetection(vm["path_to_model"].as<std::string>());
         pDollar->detectEdges(img2, edges);
 
 

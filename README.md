@@ -5,7 +5,7 @@
 ![Teaser Image](http://grail.cs.washington.edu/projects/soccer/images/teaser.png)
 
 
-Warning: I am in the process of transferring the repo, so many things will probably not work.
+Warning: I am in the process of transferring the repo, so some things probably will not work.
 
 -----------------
 
@@ -46,6 +46,12 @@ Therefore we break it into individual parts that have specific inputs and output
 (eg png to pickle) and communicate through a python3 class that reads, processes 
 and writes the intermediate and final results.  
 
+First, download the repo and install its dependencies
+```
+# SOCCERCODE=/path/to/soccercode
+git clone https://github.com/krematas/soccerontable $SOCCERCODE
+pip3 install -r requirements.txt
+```
 Let's start by downloading an example dataset
 ```
 wget http://grail.cs.washington.edu/projects/soccer/barcelona.zip
@@ -63,4 +69,34 @@ mkdir $DATADIR/detectron
 cp utils/thirdpartyscripts/infer_subimages.py ./$DETECTRON/tools/
 cd $DETECTRON
 python2 tools/infer_subimages.py --cfg configs/12_2017_baselines/e2e_mask_rcnn_R-101-FPN_2x.yaml --output-dir $DATADIR/detectron --image-ext jpg --wts https://s3-us-west-2.amazonaws.com/detectron/35861858/12_2017_baselines/e2e_mask_rcnn_R-101-FPN_2x.yaml.02_32_51.SgT4y1cO/output/train/coco_2014_train:coco_2014_valminusminival/generalized_rcnn/model_final.pkl $DATADIR/images/
+```
+
+Now we can run the calibration step. In the first frame we give 4 manual correspondences and
+afterwards the camera parameters are optimized to fit a synthetic 3D field to the lines in 
+the image.
+```
+cd $SOCCERCODE
+python3 demo/calibrate_video.py --path_to_data $DATADIR
+```
+
+Next, we estimate poses, near the bounding boxes that Mask-RCNN gave.
+```
+# OPENPOSEDIR=/path/to/openpose/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64/
+python3 demo/estimate_poses.py --path_to_data $DATADIR --openpose_dir $OPENPOSEDIR
+```
+
+The estimated poses cover very well the players in terms of localization/extend/etc. We use
+them to make individual crops of players for every frame for further processing. 
+We use also the poses to refine the instance segmentation.
+```
+python3 demo/crop_players.py --path_to_data $DATADIR --margin 25
+export OMP_NUM_THREADS=8
+./soccer3d/instancesegm/instancesegm --path_to_data $DATADIR/players/ --thresh 1.5 --path_to_model ./soccer3d/instancesegm/model.yml.gz
+```
+
+We combine the masks from Mask-RCNN and our pose-based optimization and we prepare the data for the network
+```
+python3 demo/combine_masks_for_network.py --path_to_data $DATADIR --margin 25
+python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players
 ```
