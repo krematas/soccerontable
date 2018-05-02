@@ -40,10 +40,10 @@ These are the non "pip3 install" dependencies:
 -----------------
 
 ## Upconversion of YouTube Soccer videos to 3D ##
-The pipeline contains parts written or depending on python2, python3, cython, 
-C/C++, which makes it a bit difficult to combine everything in one system. 
-Therefore we break it into individual parts that have specific inputs and outputs 
-(eg png to pickle) and communicate through a python3 class that reads, processes 
+The pipeline contains parts written or depending on python2, python3, cython,
+C/C++, which makes it a bit difficult to combine everything in one system.
+Therefore we break it into individual parts that have specific inputs and outputs
+(eg png to pickle) and communicate through a python3 class that reads, processes
 and writes the intermediate and final results.  
 
 First, download the repo and install its dependencies
@@ -59,7 +59,7 @@ unzip barcelona.zip
 # DATADIR=/path/to/barcelona
 ```
 
-The original video was cropped from [YouTube](https://www.youtube.com/watch?v=hYU51XQruq0) 
+The original video was cropped from [YouTube](https://www.youtube.com/watch?v=hYU51XQruq0)
 and frames were extracted with avconv.
 
 Run Detectron to get bounding boxes and segmentation masks
@@ -72,7 +72,7 @@ python2 tools/infer_subimages.py --cfg configs/12_2017_baselines/e2e_mask_rcnn_R
 ```
 
 Now we can run the calibration step. In the first frame we give 4 manual correspondences and
-afterwards the camera parameters are optimized to fit a synthetic 3D field to the lines in 
+afterwards the camera parameters are optimized to fit a synthetic 3D field to the lines in
 the image.
 ```
 cd $SOCCERCODE
@@ -87,7 +87,7 @@ python3 demo/estimate_poses.py --path_to_data $DATADIR --openpose_dir $OPENPOSED
 ```
 
 The estimated poses cover very well the players in terms of localization/extend/etc. We use
-them to make individual crops of players for every frame for further processing. 
+them to make individual crops of players for every frame for further processing.
 We use also the poses to refine the instance segmentation.
 ```
 python3 demo/crop_players.py --path_to_data $DATADIR --margin 25
@@ -106,3 +106,19 @@ python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath
 ```
 
 Next, tracking and converting the depthmaps to pointclouds. To be continued
+
+-----------------
+
+## Downloads ##
+<div align='center'>
+
+
+<table border="0" style="text-align: center;" >
+<tr><td><img src="http://grail.cs.washington.edu/projects/soccer/images/Unity_logo.jpg" alt="Drawing" style="width: 200px; margin-right:5px;"/></td><td><img src="http://grail.cs.washington.edu/projects/soccer/images/hololens.jpg" alt="Drawing" style="width: 200px;margin-left:5px;"/>
+</td></tr>
+<tr><td class="caption">Unity project</td><td class="caption">Hololens Visual Studio solution</td></tr>
+</table>
+
+
+
+</div>
