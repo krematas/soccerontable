@@ -57,7 +57,15 @@ Let's start by downloading an example dataset
 wget http://grail.cs.washington.edu/projects/soccer/barcelona.zip
 unzip barcelona.zip
 # DATADIR=/path/to/barcelona
-```
+
+  barcelona
+  ├── images
+      ├── 00000.jpg
+      ├── 00001.jpg
+      ├── ...
+
+
+  ```
 
 The original video was cropped from [YouTube](https://www.youtube.com/watch?v=hYU51XQruq0)
 and frames were extracted with avconv.
@@ -114,9 +122,13 @@ Next, tracking and converting the depthmaps to pointclouds. To be continued
 
 
 <table border="0" style="text-align: center;" >
-<tr><td><img src="http://grail.cs.washington.edu/projects/soccer/images/Unity_logo.jpg" alt="Drawing" style="width: 200px; margin-right:5px;"/></td><td><img src="http://grail.cs.washington.edu/projects/soccer/images/hololens.jpg" alt="Drawing" style="width: 200px;margin-left:5px;"/>
+<tr><td><a href="https://drive.google.com/open?id=1jA4MoAogphjj7Mvl-f2drkZIVPbtaGy9"  target="_blank">
+<img src="http://grail.cs.washington.edu/projects/soccer/images/Unity_logo.jpg" alt="Drawing" style="width: 200px; margin-right:5px;"/>
+</a></td><td>
+<a href="https://drive.google.com/open?id=1rwc_Scy10V4TT6Mj7KNSkhj3mkS3IcYj"  target="_blank">
+<img src="http://grail.cs.washington.edu/projects/soccer/images/hololens.jpg" alt="Drawing" style="width: 200px;margin-left:5px;"/></a>
 </td></tr>
-<tr><td class="caption">Unity project</td><td class="caption">Hololens Visual Studio solution</td></tr>
+<tr><td class="caption">Unity project (2018.1)</td><td class="caption">Hololens Visual Studio solution (VS2017 Community)</td></tr>
 </table>
 
 
