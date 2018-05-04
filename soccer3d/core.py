@@ -402,6 +402,7 @@ class YoutubeVideo:
         return all_boxes, all_segs, all_keyps, all_classes
 
     def gather_detectron(self):
+        glog.info('Gathering Detectron')
 
         if not exists(join(self.path_to_dataset, 'detectron')):
             os.mkdir(join(self.path_to_dataset, 'detectron'))
@@ -414,8 +415,7 @@ class YoutubeVideo:
 
         else:
 
-            for i, basename in tqdm(enumerate(self.frame_basenames)):
-                # glog.info(basename)
+            for i, basename in enumerate(tqdm(self.frame_basenames)):
                 with open(join(self.path_to_dataset, 'detectron', '{0}.yml'.format(basename)), 'rb') as stream:
                     data = yaml.load(stream)
                 boxes, classes, segms = data['boxes'], data['classes'], data['segms']

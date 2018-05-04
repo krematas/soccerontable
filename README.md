@@ -118,9 +118,11 @@ Next, tracking and converting the depthmaps to pointclouds. To be continued
 -----------------
 
 ## Downloads ##
+
+The unity project and the hololens visual studio solution can be downloaded below (click on the image).
+The project was done on Unity version 2018.1 and to run the Hololens VS solution you will need a Hololens 
+(with a bluetooth keyboard to place the hologram properly).
 <div align='center'>
-
-
 <table border="0" style="text-align: center;" >
 <tr><td><a href="https://drive.google.com/open?id=1jA4MoAogphjj7Mvl-f2drkZIVPbtaGy9"  target="_blank">
 <img src="http://grail.cs.washington.edu/projects/soccer/images/Unity_logo.jpg" alt="Drawing" style="width: 200px; margin-right:5px;"/>
@@ -128,9 +130,6 @@ Next, tracking and converting the depthmaps to pointclouds. To be continued
 <a href="https://drive.google.com/open?id=1rwc_Scy10V4TT6Mj7KNSkhj3mkS3IcYj"  target="_blank">
 <img src="http://grail.cs.washington.edu/projects/soccer/images/hololens.jpg" alt="Drawing" style="width: 200px;margin-left:5px;"/></a>
 </td></tr>
-<tr><td class="caption">Unity project (2018.1)</td><td class="caption">Hololens Visual Studio solution (VS2017 Community)</td></tr>
+<tr><td align="center">Unity project (2018.1)</td><td align="center">Hololens Visual Studio solution (VS2017 Community)</td></tr>
 </table>
-
-
-
 </div>
