@@ -30,6 +30,7 @@ file_utils.mkdir(os.path.join(db.path_to_dataset, 'players', 'cnn_masks'))
 file_utils.mkdir(os.path.join(db.path_to_dataset, 'players', 'labels'))
 file_utils.mkdir(os.path.join(db.path_to_dataset, 'players', 'predictions'))
 file_utils.mkdir(os.path.join(db.path_to_dataset, 'players', 'metadata'))
+file_utils.mkdir(os.path.join(db.path_to_dataset, 'players', 'meshes'))
 
 margin = opt.margin
 

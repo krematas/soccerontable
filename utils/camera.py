@@ -327,6 +327,13 @@ class Camera:
         else:
             self.mask = np.ones((self.height, self.width), dtype=int)
 
+    def depthmap_to_pointcloud(self, depth_buffer):
+        I, J = (depth_buffer > 0).nonzero()
+        points2d = np.array([J, I]).T
+        depth = depth_buffer[I, J]
+        points3d = self.unproject(points2d, depth)
+        return points3d.T
+
     # def show_view(self, masked=False, points=None):
     #     import matplotlib.pyplot as plt
     #

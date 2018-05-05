@@ -4,8 +4,6 @@ from os import listdir
 from os.path import isfile, join, exists
 import utils.io as io
 from soccer3d import calibration
-# from soccer3d import segmentation
-# from soccer3d import tracking
 import utils.misc as misc_utils
 import utils.camera as cam_utils
 import utils.draw as draw_utils
@@ -128,7 +126,7 @@ class YoutubeVideo:
                     np.save(join(self.path_to_dataset, 'calib', '{0}'.format(self.frame_basenames[0])),
                             {'A': A, 'R': R, 'T': T})
                     for i in tqdm(range(1, self.n_frames)):
-                        glog.info('Calibrating frame {0} ({1}/{2})'.format(self.frame_basenames[i], i, self.n_frames))
+                        # glog.info('Calibrating frame {0} ({1}/{2})'.format(self.frame_basenames[i], i, self.n_frames))
                         img = self.get_frame(i)
                         coarse_mask = self.get_mask_from_detectron(i)
 
@@ -347,18 +345,6 @@ class YoutubeVideo:
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def track_people(self):
-        pose_matrix = []
-        for i, basename in enumerate(tqdm(self.frame_basenames)):
-            poses = self.poses[basename]
-            pose_matrix.append(poses)
-
-        sol = tracking.track_from_poses(pose_matrix)
-        self.tracks = sol
-        # Plot the result
-
-    # ------------------------------------------------------------------------------------------------------------------
-
     def _merge_subimages_detectron(self, _boxes, _segms, _keyps):
 
         H, W = self.shape[0], self.shape[1]
@@ -564,25 +550,6 @@ class YoutubeVideo:
 
         return sorted([i for i in range(len(depth))], key=lambda x: depth[x])
 
-    def dump_instance_video(self, scale=4):
-
-        glog.info('Dumping tracking video')
-
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out_file = join(self.path_to_dataset, 'instances.avi')
-        out = cv2.VideoWriter(out_file, fourcc, 20.0, (self.shape[1] // scale, self.shape[0] // scale))
-
-        for i, basename in enumerate(tqdm(self.frame_basenames)):
-            ordering = self.order_boxes(i)
-            instaces_gray = self.get_instances_from_detectron(i, sorted_inds=ordering, score_thresh=0.8, nms_thresh=0.25)
-            instaces_gray = (instaces_gray*255/np.max(instaces_gray)).astype(np.uint8)
-            instaces = cv2.applyColorMap(instaces_gray, cv2.COLORMAP_COOL)
-            instaces = cv2.resize(instaces, (self.shape[1] // scale, self.shape[0] // scale))
-            out.write(np.uint8(instaces[:, :, (2, 1, 0)]))
-
-        # Release everything if job is finished
-        out.release()
-        cv2.destroyAllWindows()
 
 
 
