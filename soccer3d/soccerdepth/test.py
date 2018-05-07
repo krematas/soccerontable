@@ -1,18 +1,20 @@
 import torch
 import torch.nn as nn
-from soccerdepth.models.hourglass import hg8
+from soccer3d.soccerdepth.models.hourglass import hg8
 from torch.autograd import Variable
 import utils.files as file_utils
-from soccerdepth.data.dataset_loader import get_set
+from soccer3d.soccerdepth.data.dataset_loader import get_set
 from torch.utils.data import DataLoader
 import argparse
 import warnings
 from os.path import join
-from soccerdepth.data.data_utils import convert_test_prediction
+from soccer3d.soccerdepth.data.data_utils import convert_test_prediction
 import numpy as np
-from soccerdepth.data.transforms import *
+from soccer3d.soccerdepth.data.transforms import *
 from torchvision import transforms
 from visdom import Visdom
+from tqdm import tqdm
+
 
 warnings.filterwarnings("ignore")
 
@@ -43,7 +45,7 @@ win2 = viz.images(np.ones((1, 3, 256, 256)))
 
 print(opt)
 
-checkpoint = torch.load(join(opt.modeldir, 'model_epoch_%d_%s_%s.pth' % (opt.epoch, opt.additional_input, opt.postfix)))
+checkpoint = torch.load(opt.modelpath)
 netG_state_dict = checkpoint['state_dict']
 netG = hg8(input_nc=opt.input_nc, output_nc=opt.output_nc)
 netG.load_state_dict(netG_state_dict)
@@ -59,7 +61,7 @@ testing_data_loader = DataLoader(dataset=test_set, num_workers=8, batch_size=1, 
 
 logsoftmax = nn.LogSoftmax()
 
-for iteration, batch in enumerate(testing_data_loader):
+for iteration, batch in enumerate(tqdm(testing_data_loader)):
 
     input, target, mask = Variable(batch['image']).float(), Variable(batch['target']).long(), Variable(batch['mask']).float()
 

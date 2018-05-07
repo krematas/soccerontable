@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from . import camera
 from .import graphics
+from . import io
 
 
 def sample_spherical(npoints, ndim=3):
@@ -22,6 +23,11 @@ def get_box_from_3d_shpere(cam, center3d):
 
     tmp_mask = np.zeros((h, w), dtype=np.float32)
     tmp_mask[sphere2d[:, 1], sphere2d[:, 0]] = 1
+
+    # center2d, _ = cam.project(np.array([center3d]), dtype=int)
+    # img[center2d[0, 1], center2d[:, 0], 0] = 1
+    # io.imshow(img)
+
     contours, hierarchy, _ = cv2.findContours(tmp_mask.astype(np.uint8), 1, 2)
     x_, y_, ww_, hh_ = cv2.boundingRect(contours)
     box = np.array([x_, y_, x_ + ww_, y_ + hh_, 1])
@@ -29,7 +35,7 @@ def get_box_from_3d_shpere(cam, center3d):
     return box
 
 
-def lift_keypoints_in_3d(cam, keypoints):
+def lift_keypoints_in_3d(cam, keypoints, pad=0):
     """
     cam: camera class
     points: Nx3 matrix, N number of keypoints and X, Y, score
@@ -37,7 +43,7 @@ def lift_keypoints_in_3d(cam, keypoints):
     """
 
     # Make a bounding box
-    x1, y1, x2, y2 = min(keypoints[:, 0]), min(keypoints[:, 1]), max(keypoints[:, 0]), max(keypoints[:, 1])
+    x1, y1, x2, y2 = min(keypoints[:, 0])-pad, min(keypoints[:, 1])-pad, max(keypoints[:, 0])+pad, max(keypoints[:, 1])+pad
     bbox = np.array([[x1, y2], [x2, y2], [x1, y1], [x2, y1]])
 
     bbox_camplane = cam.unproject(bbox, 0.5)

@@ -5,13 +5,15 @@ import cv2
 from tqdm import tqdm
 
 import soccer3d
+import utils.camera as cam_utils
 import utils.files as file_utils
+import utils.misc as misc_utils
 import soccer3d.instancesegm.utils as seg_utils
 
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
-parser.add_argument('--margin', type=int, default=25, help='Margin around the pose')
+parser.add_argument('--margin', type=int, default=0, help='Margin around the pose')
 opt, _ = parser.parse_known_args()
 
 
@@ -42,14 +44,21 @@ for sel_frame in tqdm(range(db.n_frames)):
     poses = db.poses[basename]
     mask = db.get_instances_from_detectron(sel_frame, is_bool=True)
 
+    cam_mat = db.calib[basename]
+    cam = cam_utils.Camera(basename, cam_mat['A'], cam_mat['R'], cam_mat['T'], db.shape[0], db.shape[1])
+
     skeleton_buffer = seg_utils.get_instance_skeleton_buffer(db.shape[0], db.shape[1], poses)
 
     h, w = img.shape[:2]
     for i in range(len(poses)):
-        cur_pose = poses[i]
-        valid = cur_pose[:, 2] > 0
-        x1, y1, x2, y2 = int(np.min(cur_pose[valid, 0])), int(np.min(cur_pose[valid, 1])), \
-                         int(np.max(cur_pose[valid, 0])), int(np.max(cur_pose[valid, 1]))
+        valid = poses[i][:, 2] > 0
+
+        kp3 = misc_utils.lift_keypoints_in_3d(cam, poses[i][valid, :], pad=0)
+
+        center3d = np.mean(kp3, axis=0)
+        center3d[1] -= 0.25
+        bbox = misc_utils.get_box_from_3d_shpere(cam, center3d)
+        x1, y1, x2, y2 = bbox[:4]
 
         x1 -= margin
         y1 -= margin

@@ -45,7 +45,7 @@ class YoutubeVideo:
         self.ext = self.frame_fullnames[0][-3:]
 
         self.bbox = {f: None for f in self.frame_basenames}
-        self.mask_coarse = {f: None for f in self.frame_basenames}
+        self.mask = {f: None for f in self.frame_basenames}
         self.calib = {f: None for f in self.frame_basenames}
         self.poses = {f: None for f in self.frame_basenames}
         self.detectron = {f: None for f in self.frame_basenames}
@@ -85,14 +85,6 @@ class YoutubeVideo:
 
     def get_frame(self, frame_number, dtype=np.float32, sfactor=1.0, image_type='rgb'):
         return io.imread(self.frame_fullnames[frame_number], dtype=dtype, sfactor=sfactor, image_type=image_type)
-
-    # ------------------------------------------------------------------------------------------------------------------
-
-    def get_coarse_mask(self, frame_number):
-        mask = self.mask_coarse[self.frame_basenames[frame_number]]
-        if mask.shape[0] != self.shape[0] or mask.shape[1] != self.shape[1]:
-            mask = cv2.resize(mask, (self.shape[1], self.shape[0]))
-        return mask
 
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -139,7 +131,7 @@ class YoutubeVideo:
                         np.save(join(self.path_to_dataset, 'calib', '{0}'.format(self.frame_basenames[i])),
                                 {'A': A, 'R': R, 'T': T})
 
-            for i, basename in tqdm(enumerate(self.frame_basenames)):
+            for i, basename in enumerate(tqdm(self.frame_basenames)):
                 calib_npy = np.load(join(self.path_to_dataset, 'calib', '{0}.npy'.format(basename))).item()
                 A, R, T = calib_npy['A'], calib_npy['R'], calib_npy['T']
                 self.calib[basename] = {'A': A, 'R': R, 'T': T}
@@ -150,7 +142,7 @@ class YoutubeVideo:
     # ------------------------------------------------------------------------------------------------------------------
 
     def dump_video(self, vidtype, scale=4, mot_tracks=None, one_color=True):
-        if vidtype not in ['calib', 'poses', 'detections', 'tracks']:
+        if vidtype not in ['calib', 'poses', 'detections', 'tracks', 'mask']:
             raise Exception('Uknown video format')
 
         if vidtype == 'tracks' and mot_tracks is None:
@@ -206,6 +198,11 @@ class YoutubeVideo:
                     cv2.rectangle(img, (int(x), int(y)), (int(x + w), int(y + h)),
                                   (clr[0] * 255, clr[1] * 255, clr[2] * 255), 10)
                     cv2.putText(img, str(int(track_id)), (int(x), int(y)), font, 2, (255, 255, 255), 2, cv2.LINE_AA)
+
+            elif vidtype == 'mask':
+                # Mask
+                mask = self.get_mask_from_detectron(i)*255
+                img = np.dstack((mask, mask, mask))
 
             img = cv2.resize(img, (self.shape[1] // scale, self.shape[0] // scale))
             out.write(np.uint8(img[:, :, (2, 1, 0)]))
@@ -293,7 +290,8 @@ class YoutubeVideo:
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def refine_poses(self, keypoint_thresh=10, score_thresh=0.5, neck_thresh=0.59):
+    def refine_poses(self, keypoint_thresh=10, score_thresh=0.5, neck_thresh=0.59, margin=0.0):
+        W, H = 104.73, 67.74
 
         for i, basename in enumerate(tqdm(self.frame_basenames)):
             poses = self.poses[basename]
@@ -321,7 +319,6 @@ class YoutubeVideo:
             root_box = np.array(root_box)
 
             # Perform Neck NMS
-
             if len(root_box.shape) == 1:
                 root_box = root_box[None, :]
                 keep2 = [0]
@@ -329,6 +326,18 @@ class YoutubeVideo:
                 keep2 = nms(root_box.astype(np.float32), 0.1)
 
             poses = [poses[ii] for ii in keep2]
+
+            # Remove poses outside of field
+            keep3 = []
+            cam_mat = self.calib[basename]
+            cam = cam_utils.Camera(basename, cam_mat['A'], cam_mat['R'], cam_mat['T'], self.shape[0], self.shape[1])
+            for ii in range(len(poses)):
+                kp3 = misc_utils.lift_keypoints_in_3d(cam, poses[ii])
+                if (-W / 2. - margin) <= kp3[1, 0] <= (W / 2. + margin) and (-H / 2. - margin) <= kp3[1, 2] <= (H / 2. + margin):
+                    keep3.append(ii)
+
+            poses = [poses[ii] for ii in keep3]
+
             self.poses[basename] = poses
 
     # ------------------------------------------------------------------------------------------------------------------
