@@ -98,7 +98,7 @@ The estimated poses cover very well the players in terms of localization/extend/
 them to make individual crops of players for every frame for further processing.
 We use also the poses to refine the instance segmentation.
 ```
-python3 demo/crop_players.py --path_to_data $DATADIR --margin 25
+python3 demo/crop_players.py --path_to_data $DATADIR
 export OMP_NUM_THREADS=8
 ./soccer3d/instancesegm/instancesegm --path_to_data $DATADIR/players/ --thresh 1.5 --path_to_model ./soccer3d/instancesegm/model.yml.gz
 ```
@@ -109,11 +109,15 @@ we prepare the data for the network.
 The model weights can be found [here](https://drive.google.com/file/d/1QBLyoNBrFu0oYr15WECzCfOgzuAAQW7w/view?usp=sharing)
 ```
 # MODELPATH=/path/to/model/
-python3 demo/combine_masks_for_network.py --path_to_data $DATADIR --margin 25
+python3 demo/combine_masks_for_network.py --path_to_data $DATADIR
 python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath $MODELPATH
 ```
 
-Next, tracking and converting the depthmaps to pointclouds. To be continued
+Next, tracking and converting the depthmaps to pointclouds.
+```
+python3 demo/track_players.py --path_to_data $DATADIR
+python3 demo/make_pointcloud.py --path_to_data $DATADIR
+```
 
 -----------------
 

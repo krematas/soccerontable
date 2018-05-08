@@ -327,8 +327,8 @@ class Camera:
         else:
             self.mask = np.ones((self.height, self.width), dtype=int)
 
-    def depthmap_to_pointcloud(self, depth_buffer):
-        I, J = (depth_buffer > 0).nonzero()
+    def depthmap_to_pointcloud(self, depth_buffer, thresh=0.0):
+        I, J = (depth_buffer > thresh).nonzero()
         points2d = np.array([J, I]).T
         depth = depth_buffer[I, J]
         points3d = self.unproject(points2d, depth)
