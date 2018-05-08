@@ -145,7 +145,7 @@ def putting_objects_in_perspective(camera, boxes, max_height=2.5, min_height=1.5
     return keep, billboards
 
 
-def pack_textures(textures_atlas, uvs_atlas, n_rows=2):
+def pack_textures(textures_atlas, uvs_atlas, n_rows=1):
 
     n_columns = len(textures_atlas)//n_rows+1
     row_images = []

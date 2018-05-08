@@ -10,3 +10,5 @@ glog
 torch
 torchvision
 visdom
+openmesh
+glumpy

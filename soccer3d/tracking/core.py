@@ -109,13 +109,13 @@ def find_tracks(dets_per_frame, frame_basenames, dist_thresh=25, time_thresh=20,
     return new_tracklets
 
 
-def _fun(params, detections, time_index, traj_length):
-    X_ = np.reshape(params, (3, traj_length))
+def _fun(params, detections, time_index, traj_length, a=0.01, b=0.1, c=0.1):
+    X_ = np.reshape(params, (2, traj_length))
     E_det = np.sum(np.linalg.norm(X_ - detections, axis=0))
     temporal_term = X_[:, time_index[0, :]] - 2 * X_[:, time_index[1, :]] + X_[:, time_index[2, :]]
     E_dyn = np.sum(np.linalg.norm(temporal_term, axis=0))
     E_vel = np.sum(np.linalg.norm(X_[:, time_index[0, :]] - X_[:, time_index[1, :]], axis=0))
-    return 0.01 * E_det + E_dyn + 0.1 * E_vel
+    return a * E_det + b*E_dyn + c*E_vel
 
 
 def smooth_trajectory(tracklet, neck_pos):
@@ -123,12 +123,14 @@ def smooth_trajectory(tracklet, neck_pos):
     traj_length = len(tracklet)
     time_index = np.array([range(0, traj_length - 2), range(0 + 1, traj_length - 1), range(0 + 2, traj_length)])
 
-    detection_points = neck_pos.T
+    detection_points = neck_pos.T[(0, 2), :]
     params = detection_points.copy()
 
     res = minimize(_fun, params, args=(detection_points, time_index, traj_length), method='L-BFGS-B',
                    options={'gtol': 1e-6, 'disp': False, 'maxiter': 500})
-    smoothed_positions = np.reshape(res.x, (3, traj_length))
+    _smoothed_positions = np.reshape(res.x, (2, traj_length))
+    smoothed_positions = neck_pos.T.copy()
+    smoothed_positions[(0, 2), :] = _smoothed_positions
     return smoothed_positions
 
 
