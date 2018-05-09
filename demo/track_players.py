@@ -8,6 +8,8 @@ import json
 import argparse
 from tqdm import tqdm
 import glog
+import matplotlib.pyplot as plt
+
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
@@ -46,8 +48,7 @@ new_tracklets = find_tracks(dets_per_frame, db.frame_basenames)
 # Save tracks
 
 mot_matrix = convert_to_MOT(new_tracklets, db.n_frames)
-
-# db.dump_video('tracks', scale=2, mot_tracks=mot_matrix)
+db.dump_video('tracks', scale=2, mot_tracks=mot_matrix)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -56,14 +57,11 @@ glog.info('Smoothing 3D trajectories')
 
 data_out = {i: [] for i in db.frame_basenames}
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
 ax = fig.add_subplot(111)
 
 
-# for i in tqdm(range(len(new_tracklets))):
-for i in tqdm(range(2)):
+for i in tqdm(range(len(new_tracklets))):
 
     neck_pos = []
     for j in range(len(new_tracklets[i])):
@@ -79,11 +77,11 @@ for i in tqdm(range(2)):
 
     # Smooth trajectory
     smoothed_positions = smooth_trajectory(new_tracklets[i], neck_pos)
-    ax.plot(smoothed_positions[0, :], smoothed_positions[2, :], 'o')
     for j in range(len(new_tracklets[i])):
         data_out[new_tracklets[i][j].frame].append({'mesh': new_tracklets[i][j].mesh_name, 'x': smoothed_positions[0, j],
                                                     'y': smoothed_positions[1, j], 'z': smoothed_positions[2, j]})
 
+    ax.plot(smoothed_positions[0, :], smoothed_positions[2, :], 'o')
 
 plt.show()
 

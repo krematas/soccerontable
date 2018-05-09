@@ -45,21 +45,6 @@ for sel_frame in tqdm(range(db.n_frames)):
         x1, y1, x2, y2 = anno[:4].astype(int)
         player_depth = anno[7]
 
-        # valid = poses[i][:, 2] > 0
-        #
-        # kp3 = misc_utils.lift_keypoints_in_3d(cam, poses[i][valid, :], pad=0)
-        #
-        # center3d = np.mean(kp3, axis=0)
-        # center3d[1] -= 0.25
-        # bbox = misc_utils.get_box_from_3d_shpere(cam, center3d)
-        # x1, y1, x2, y2 = bbox[:4]
-        #
-        # x1 -= margin
-        # y1 -= margin
-        # x2 += margin
-        # y2 += margin
-        # x1, x2, y1, y2 = max(x1, 0), min(w, x2), max(y1, 0), min(h, y2)
-
         upsampler = nn.UpsamplingBilinear2d(size=(int(y2 - y1), int(x2 - x1)))
         _prediction = upsampler(torch.from_numpy(pred_npy))
         prediction = np.argmax(_prediction.cpu().data.numpy(), axis=1)[0, :, :]
@@ -69,8 +54,6 @@ for sel_frame in tqdm(range(db.n_frames)):
         mask[I, J] = 1
 
         depthmap = bins[prediction - 1]
-        # depthmap = cv2.resize(depthmap, (x2-x1, y2-y1))
-        # mask = cv2.resize(mask, (x2-x1, y2-y1), interpolation=cv2.INTER_NEAREST)
 
         depthmap += np.mean(player_depth)
         depthmap *= mask
@@ -81,9 +64,6 @@ for sel_frame in tqdm(range(db.n_frames)):
 
         player3d = cam.depthmap_to_pointcloud(z_buffer)
         color3d = img[I, J, :]
-
-        # img[I, J, 1] = 1
-        # io.imshow(img)
 
         ply_data = io.numpy_to_ply(player3d, color3d*255)
         io.write_ply(join(db.path_to_dataset, 'players', 'meshes', player_name+'.ply'), ply_data)

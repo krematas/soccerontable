@@ -304,7 +304,6 @@ class Camera:
         return modelview, projection
 
     def set_view(self, img_name, undistort=True):
-        # print(img_name)
         img1 = cv2.imread(img_name)
         self.org_height, self.org_width = img1.shape[0:2]
 
@@ -333,23 +332,3 @@ class Camera:
         depth = depth_buffer[I, J]
         points3d = self.unproject(points2d, depth)
         return points3d.T
-
-    # def show_view(self, masked=False, points=None):
-    #     import matplotlib.pyplot as plt
-    #
-    #     if masked:
-    #         img = self.view*self.mask[:, :, np.newaxis]
-    #     else:
-    #         img = self.view
-    #
-    #     fig, ax_arr = plt.subplots(1, 1)
-    #     ax_arr.imshow(img, interpolation='nearest')
-    #     ax_arr.axis('off')
-    #
-    #     if points is not None:
-    #         valid = np.logical_and(np.logical_and(points[:, 0]>=0, points[:, 0]<self.width),
-    #                                np.logical_and(points[:, 1] >= 0, points[:, 1] < self.height))
-    #         ax_arr.plot(points[valid, 0], points[valid, 1], 'r.')
-    #
-    #     plt.ylabel(self.name)
-    #     plt.show()

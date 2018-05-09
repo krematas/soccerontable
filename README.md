@@ -119,6 +119,16 @@ python3 demo/track_players.py --path_to_data $DATADIR
 python3 demo/make_pointcloud.py --path_to_data $DATADIR
 ```
 
+Finally we generate one mesh per frame, with the smooth position of the players. Note that the resolution of the
+mesh is reduced, so later it can easily fit into Hololens.
+```
+python3 demo/generate_mesh.py --path_to_data $DATADIR
+```
+
+Just to be sure that everything is fine, we can have a simple opengl visualization
+```
+python3 demo/simple_visualization.py --path_to_data $DATADIR
+```
 -----------------
 
 ## Downloads ##

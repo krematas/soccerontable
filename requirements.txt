@@ -12,3 +12,4 @@ torchvision
 visdom
 openmesh
 glumpy
+pyopengl
