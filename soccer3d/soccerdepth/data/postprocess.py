@@ -1,6 +1,6 @@
 import numpy as np
 import torch.nn as nn
-import utils.graphics as cg_utils
+import utils.geometric as cg_utils
 import utils.io as io
 import utils.mesh as mesh_utils
 import utils.files as file_utils

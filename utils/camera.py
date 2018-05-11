@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import os
 from . import transform
-from . import graphics
+from . import geometric
 
 
 def grid_search_focal_length(points3d, points2d, h, w, same_f=False, fx_step=20):
@@ -191,7 +191,7 @@ def plane_points_to_3d(points2d, cam, plane_origin=np.array([0, 0, 0]), plane_di
     origin = cam.get_position().T
     direction = p3.T - np.tile(origin, (p3.shape[1], 1))
     direction /= np.tile(np.linalg.norm(direction, axis=1)[:, np.newaxis], (1, 3))
-    plane3d = graphics.ray_plane_intersection(origin, direction, plane_origin, plane_direction)
+    plane3d = geometric.ray_plane_intersection(origin, direction, plane_origin, plane_direction)
     return plane3d
 
 

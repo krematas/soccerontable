@@ -113,15 +113,15 @@ python3 demo/combine_masks_for_network.py --path_to_data $DATADIR
 python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath $MODELPATH
 ```
 
-Next, tracking and converting the depthmaps to pointclouds.
+Next, we convert tje estimated depthmaps to pointclouds.
 ```
-python3 demo/track_players.py --path_to_data $DATADIR
-python3 demo/make_pointcloud.py --path_to_data $DATADIR
+python3 demo/depth_estimation_to_pointcloud.py --path_to_data $DATADIR
 ```
 
-Finally we generate one mesh per frame, with the smooth position of the players. Note that the resolution of the
+Finally we generate one mesh per frame, with the smooth position of the players, based on tracking. Note that the resolution of the
 mesh is reduced, so later it can easily fit into Hololens.
 ```
+python3 demo/track_players.py --path_to_data $DATADIR
 python3 demo/generate_mesh.py --path_to_data $DATADIR
 ```
 

@@ -4,6 +4,7 @@ from os.path import join
 import utils.camera as cam_utils
 import utils.io as io
 import utils.misc as misc_utils
+import utils.geometric as geom_utils
 from tqdm import tqdm
 import cv2
 import argparse
@@ -43,6 +44,7 @@ for sel_frame in tqdm(range(db.n_frames)):
         pred_npy = np.load(join(db.path_to_dataset, 'players', 'predictions', player_name+'.npy'))
 
         x1, y1, x2, y2 = anno[:4].astype(int)
+        cx, cy, cz = anno[4:7]
         player_depth = anno[7]
 
         upsampler = nn.UpsamplingBilinear2d(size=(int(y2 - y1), int(x2 - x1)))
@@ -55,8 +57,21 @@ for sel_frame in tqdm(range(db.n_frames)):
 
         depthmap = bins[prediction - 1]
 
-        print(player_depth)
-        depthmap += np.mean(player_depth)
+        # Estimate the bounding box plane: the plane that passes through the mid of the player and faces towards the camera
+        p0 = np.array([[cx, cy, cz]])
+        n0 = cam.get_direction()
+        origin = cam.get_position().T
+        n0[1] = 0.0
+        n0 /= np.linalg.norm(n0)
+
+        player_points2d = np.vstack((J, I)).T
+        p3 = cam.unproject(player_points2d, 0.5)
+        direction = p3.T - np.tile(origin, (p3.shape[1], 1))
+        direction /= np.tile(np.linalg.norm(direction, axis=1)[:, np.newaxis], (1, 3))
+        billboard = geom_utils.ray_plane_intersection(origin, direction, p0, n0)
+        billboard_2d, billboard_depth = cam.project(billboard, dtype=np.float32)
+
+        depthmap[I, J] += billboard_depth
         depthmap *= mask
 
         z_buffer = np.zeros((db.shape[0], db.shape[1]))

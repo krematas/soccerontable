@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from . import camera
-from .import graphics
+from .import geometric
 from . import io
 
 
@@ -50,7 +50,7 @@ def lift_keypoints_in_3d(cam, keypoints, pad=0):
     origin = cam.get_position().T
     bbox_direction = bbox_camplane.T - np.tile(origin, (bbox_camplane.shape[1], 1))
     bbox_direction /= np.tile(np.linalg.norm(bbox_direction, axis=1)[:, np.newaxis], (1, 3))
-    bbox_onground = graphics.ray_plane_intersection(origin, bbox_direction, np.array([0, 0, 0]), np.array([0, 1, 0]))
+    bbox_onground = geometric.ray_plane_intersection(origin, bbox_direction, np.array([0, 0, 0]), np.array([0, 1, 0]))
 
     # Find the billboard plane
     p0 = bbox_onground[0, :]
@@ -64,7 +64,7 @@ def lift_keypoints_in_3d(cam, keypoints, pad=0):
     keypoints_camplane = cam.unproject(keypoints[:, :2], 0.5)
     kp_direction = keypoints_camplane.T - np.tile(origin, (keypoints_camplane.shape[1], 1))
     kp_direction /= np.tile(np.linalg.norm(kp_direction, axis=1)[:, np.newaxis], (1, 3))
-    kepoints_lifted = graphics.ray_plane_intersection(origin, kp_direction, p0, billboard_n)
+    kepoints_lifted = geometric.ray_plane_intersection(origin, kp_direction, p0, billboard_n)
 
     return kepoints_lifted
 
@@ -82,7 +82,7 @@ def lift_box_in_3d(cam, bbox):
         origin = cam.get_position().T
         direction = p3.T - np.tile(origin, (p3.shape[1], 1))
         direction /= np.tile(np.linalg.norm(direction, axis=1)[:, np.newaxis], (1, 3))
-        plane3d = graphics.ray_plane_intersection(origin, direction, np.array([0, 0, 0]), np.array([0, 1, 0]))
+        plane3d = geometric.ray_plane_intersection(origin, direction, np.array([0, 0, 0]), np.array([0, 1, 0]))
 
         # Find the billboard plane
         p0 = plane3d[0, :]
@@ -96,7 +96,7 @@ def lift_box_in_3d(cam, bbox):
         p3 = cam.unproject(points2d, 0.5)
         direction = p3.T - np.tile(origin, (p3.shape[1], 1))
         direction /= np.tile(np.linalg.norm(direction, axis=1)[:, np.newaxis], (1, 3))
-        billboard = graphics.ray_plane_intersection(origin, direction, p0, billboard_n)
+        billboard = geometric.ray_plane_intersection(origin, direction, p0, billboard_n)
 
         bbox3d.append(billboard)
 
@@ -118,7 +118,7 @@ def putting_objects_in_perspective(camera, boxes, max_height=2.5, min_height=1.5
         origin = camera.get_position().T
         direction = p3.T - np.tile(origin, (p3.shape[1], 1))
         direction /= np.tile(np.linalg.norm(direction, axis=1)[:, np.newaxis], (1, 3))
-        plane3d = graphics.ray_plane_intersection(origin, direction, np.array([0, 0, 0]), np.array([0, 1, 0]))
+        plane3d = geometric.ray_plane_intersection(origin, direction, np.array([0, 0, 0]), np.array([0, 1, 0]))
 
         # Find the billboard plane
         p0 = plane3d[0, :].copy()
@@ -132,7 +132,7 @@ def putting_objects_in_perspective(camera, boxes, max_height=2.5, min_height=1.5
         p3 = camera.unproject(points2d, 0.5)
         direction = p3.T - np.tile(origin, (p3.shape[1], 1))
         direction /= np.tile(np.linalg.norm(direction, axis=1)[:, np.newaxis], (1, 3))
-        billboard = graphics.ray_plane_intersection(origin, direction, p0, billboard_n)
+        billboard = geometric.ray_plane_intersection(origin, direction, p0, billboard_n)
 
         player_height = billboard[3, 1] - billboard[0, 1]
 
