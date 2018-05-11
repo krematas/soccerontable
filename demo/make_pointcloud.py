@@ -55,6 +55,7 @@ for sel_frame in tqdm(range(db.n_frames)):
 
         depthmap = bins[prediction - 1]
 
+        print(player_depth)
         depthmap += np.mean(player_depth)
         depthmap *= mask
 
