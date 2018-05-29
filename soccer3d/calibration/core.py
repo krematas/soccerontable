@@ -57,7 +57,7 @@ def _calibrate_camera_dist_transf(A, R, T, dist_transf, points3d):
     return A__, R__, T__
 
 
-def _set_correspondences(img, field_img_path='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/field.png'):
+def _set_correspondences(img, field_img_path='./demo/data/field.png'):
 
     field_img = io.imread(field_img_path)
 
@@ -97,11 +97,11 @@ def _set_correspondences(img, field_img_path='/home/krematas/Mountpoints/grail/d
     return points2d, points3d
 
 
-def calibrate_by_click(img, mask, edge_sfactor=0.5):
+def calibrate_by_click(img, mask, edge_sfactor=0.5, field_img_path='./demo/data/field.png'):
 
     h, w = img.shape[0:2]
 
-    points2d, points3d = _set_correspondences(img)
+    points2d, points3d = _set_correspondences(img, field_img_path=field_img_path)
 
     # ------------------------------------------------------------------------------------------------------------------
     # OpenCV initial calibration
