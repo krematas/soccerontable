@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
+parser.add_argument('--dist_thresh', type=int, default=50, help='Distance threshold for merging tracklets (in pixels)')
 opt, _ = parser.parse_known_args()
 
 
@@ -41,7 +42,7 @@ for i in range(db.n_frames):
     dets_per_frame.append(__detection_list)
 
 
-new_tracklets = find_tracks(dets_per_frame, db.frame_basenames)
+new_tracklets = find_tracks(dets_per_frame, db.frame_basenames, dist_thresh=opt.dist_thresh)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
