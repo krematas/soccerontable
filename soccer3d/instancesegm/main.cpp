@@ -58,6 +58,8 @@ int main(int argc, char** argv )
     float sigma2 = vm["s2"].as<float>();
     float thresh = vm["thresh"].as<float>();
 
+    cv::Ptr<StructuredEdgeDetection> pDollar = createStructuredEdgeDetection(vm["path_to_model"].as<std::string>());
+
     #pragma omp parallel for
     for(int f=0; f<fileList.size(); f++){
         clock_t begin = clock();
@@ -80,9 +82,8 @@ int main(int argc, char** argv )
         image.copyTo(img2);
         img2.convertTo(img2, cv::DataType<var_t>::type);
         cv::Mat edges(img2.size(), img2.type());
-        cv::Ptr<StructuredEdgeDetection> pDollar = createStructuredEdgeDetection(vm["path_to_model"].as<std::string>());
-        pDollar->detectEdges(img2, edges);
 
+        pDollar->detectEdges(img2, edges);
 
         int height = image.rows;
         int width = image.cols;
