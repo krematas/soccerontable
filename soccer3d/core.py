@@ -455,12 +455,17 @@ class YoutubeVideo:
     def get_mask_from_detectron(self, frame_number):
         return io.imread(join(self.path_to_dataset, 'detectron', self.frame_basenames[frame_number]+'.png'))[:, :, 0]
 
-    def get_ball_from_detectron(self, thresh=0.0, ):
+    def get_ball_from_detectron(self, thresh=0.0, nms_thresh=0.5):
         for i, basename in enumerate(tqdm(self.frame_basenames)):
             data = self.detectron[basename]
             boxes, segms, keyps, classes = data['boxes'], data['segms'], data['keyps'], data['classes']
             valid = (boxes[:, 4] > thresh)*([j == 33 for j in classes])
-            self.ball[basename] = boxes[valid, :]
+            boxes = boxes[valid, :]
+            
+            valid_nms = nms(boxes.astype(np.float32), nms_thresh)
+            boxes = boxes[valid_nms, :]
+
+            self.ball[basename] = boxes
 
     def get_color_from_detections(self, frame_number):
         basename = self.frame_basenames[frame_number]
