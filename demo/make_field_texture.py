@@ -9,6 +9,10 @@ import cv2
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
+parser.add_argument('--out', default='/home/krematas/Mountpoints/grail/data/barcelona/texture.png', help='path')
+parser.add_argument('--frame', type=int, default=0, help='Frame to extract texture')
+
+
 opt, _ = parser.parse_known_args()
 
 
@@ -20,9 +24,9 @@ db = soccer3d.YoutubeVideo(opt.path_to_data)
 db.digest_metadata()
 
 
-img = db.get_frame(0)
-mask = db.get_mask_from_detectron(0)
-cam_npy = db.calib[db.frame_basenames[0]]
+img = db.get_frame(opt.frame)
+mask = db.get_mask_from_detectron(opt.frame)
+cam_npy = db.calib[db.frame_basenames[opt.frame]]
 
 cam = cam_utils.Camera('tmp', cam_npy['A'], cam_npy['R'], cam_npy['T'], db.shape[0], db.shape[1])
 
@@ -47,4 +51,4 @@ filled = (img*255).astype(np.uint8)
 
 M = cv2.getPerspectiveTransform(p2.astype(np.float32), pp2.astype(np.float32))
 dst = cv2.warpPerspective(filled, M, (db.shape[1], db.shape[0]), )
-cv2.imwrite(join(db.path_to_dataset, 'texture.png'), dst[::-1, ::-1, (2, 1, 0)])
+cv2.imwrite(opt.out, dst[::-1, ::-1, (2, 1, 0)])
