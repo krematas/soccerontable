@@ -21,4 +21,4 @@
 *.pth
 *.pdf
 *.ipynb
-
+*.DS_Store
