@@ -85,7 +85,7 @@ def show_box(img, bbox, points=None, ax=None, edgecolor='red'):
             )
         )
         plt.plot([x1, x2], [y2, y2], 'ro')
-        plt.text(x1, y2, '{0}: {1:.2f}'.format(i, bbox[i, 4]), fontsize=10)
+        plt.text(x1, y2, '{0}: {1:.3f}'.format(i, bbox[i, 4]), fontsize=10)
 
     if points is not None:
         plt.plot(points[:, 0], points[:, 1], 'c.')
