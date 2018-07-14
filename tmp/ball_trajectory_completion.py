@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 import utils.io as io
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
-parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-0', help='path')
+parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-1', help='path')
 parser.add_argument('--openpose_dir', default='/home/krematas/code/openpose', help='path')
 opt, _ = parser.parse_known_args()
 
@@ -83,9 +83,7 @@ for i, fname in enumerate(db.frame_basenames):
 
 db.dump_video('detections', scale=2)
 
-for fname in db.frame_basenames:
-    if len(db.ball[fname]) == 0:
-        print(fname)
+
 
 # img = cv.imread('messi5.jpg',0)
 # img2 = img.copy()

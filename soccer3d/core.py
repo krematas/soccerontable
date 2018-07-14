@@ -86,6 +86,8 @@ class YoutubeVideo:
     def get_frame(self, frame_number, dtype=np.float32, sfactor=1.0, image_type='rgb'):
         return io.imread(self.frame_fullnames[frame_number], dtype=dtype, sfactor=sfactor, image_type=image_type)
 
+    def get_frame_index(self, frame_name):
+        return self.frame_basenames.index(frame_name)
     # ------------------------------------------------------------------------------------------------------------------
 
     def calibrate_camera(self, vis_every=-1):

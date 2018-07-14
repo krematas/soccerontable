@@ -21,6 +21,60 @@ class Detection:
         self.visited = False
 
 
+def find_tracks_simple(dets_per_frame, frame_basenames, dist_thresh=25, time_thresh=20, len_thresh=20):
+
+    n_frames = len(frame_basenames)
+    # ----------------------------------------------------------------------------------------------------------------------
+    # Start connecting sources that are visible in the first frame
+    tracklets = []
+
+    track_id = 0
+    for f in range(n_frames):
+
+        for i in range(len(dets_per_frame[f])):
+            s = dets_per_frame[f][i]
+            if s.visited:
+                continue
+
+            dets_per_frame[f][i].visited = True
+            cur_track = [dets_per_frame[f][i]]
+
+            # Get detections from next frames
+            j = f + 1
+            q = 0
+            while j < n_frames:
+                potential_detections = [k for k in range(len(dets_per_frame[j])) if not dets_per_frame[j][k].visited]
+                potential_matches = np.array([det.root for det in dets_per_frame[j] if not det.visited])
+                if len(potential_detections) == 0:
+                    j += 1
+                    q += 1
+                    continue
+
+                dists = np.linalg.norm(s.root - potential_matches, axis=1)
+
+                dists_sorted = sorted(dists)
+                min_dist, min_id_ = np.min(dists), np.argmin(dists)
+
+                if (min_dist < dist_thresh) and q < time_thresh:
+                    min_id = potential_detections[min_id_]
+
+                    dets_per_frame[j][min_id].visited = True
+                    cur_track.append(dets_per_frame[j][min_id])
+                    s = dets_per_frame[j][min_id]
+                    q = 0
+                else:
+                    q += 1
+
+                j += 1
+            for j in range(len(cur_track)):
+                cur_track[j].track_id = track_id
+            track_id += 1
+
+            tracklets.append(cur_track)
+
+    return tracklets
+
+
 def find_tracks(dets_per_frame, frame_basenames, dist_thresh=25, time_thresh=20, len_thresh=20):
 
     n_frames = len(frame_basenames)
