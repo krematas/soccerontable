@@ -9,7 +9,7 @@ from scipy.optimize import minimize
 
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
-parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-1', help='path')
+parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Netherlands-Japan-0', help='path')
 parser.add_argument('--openpose_dir', default='/home/krematas/code/openpose', help='path')
 opt, _ = parser.parse_known_args()
 
@@ -48,10 +48,10 @@ for i in range(db.n_frames):
     dets_per_frame.append(__detection_list)
 
 
-dist_thresh = 150
-time_thresh = 30
+dist_thresh = 100
+time_thresh = 10
 new_tracklets = find_tracks_simple(dets_per_frame, db.frame_basenames, dist_thresh=dist_thresh, time_thresh=time_thresh,
-                            len_thresh=1)
+                                   len_thresh=2)
 
 tracks = []
 data = []
@@ -69,19 +69,20 @@ for i in range(len(new_tracklets)):
     data.append(np.array(_data))
     tracks.append(ball_pos)
 
-plt.imshow(img)
-for i in range(len(tracks)):
-    plt.plot(tracks[i][:, 0], tracks[i][:, 1], '.')
-plt.show()
 
 tracks2 = []
 # Check if track is not moving
 for i in range(len(tracks)):
     track_info = tracks[i]
     valid = (track_info[:, 4] > 0).nonzero()[0]
+    # io.show_box(img, track_info[valid, :])
     if np.std(track_info[valid, 0]) > 5:
         tracks2.append(track_info)
 tracks = tracks2[:]
+
+# Order tracks based on length
+index = sorted([i for i in range(len(tracks))], key=lambda x: len(tracks[x]))
+tracks = [tracks[i] for i in index]
 
 # Accumulate tracks
 ball_pos = np.zeros((db.n_frames, 5)) - 1
@@ -89,43 +90,51 @@ ball_pos = np.zeros((db.n_frames, 5)) - 1
 for i in range(len(tracks)):
     track_info = tracks[i]
     track_valid = (track_info[:, 4] >= 0.0).nonzero()[0]
-    ball_pos[track_valid, :] = track_info[track_valid, :]
+    not_set_index = (ball_pos[track_valid, 4] == -1).nonzero()[0]
+    ball_pos[track_valid[not_set_index], :] = track_info[track_valid[not_set_index], :]
 
 
 valid = (ball_pos[:, 2] >= 0).nonzero()[0]
 
-plt.imshow(img)
-for i in range(len(tracks)):
-    plt.plot(ball_pos[:, 0], ball_pos[:, 1], 'o')
 
 # Interpolate for the non valid
-anchors = []
-start = - 1
-end = -1
 
-for i in range(db.n_frames):
-    if ball_pos[i, -1] == -1 and start == -1:
-        start = i-1
-    if ball_pos[i, -1] != -1 and start != -1:
-        end = i
-        anchors.append([start, end])
-        start = - 1
-        end = -1
+def interpolate_trajectory(ball_pos):
+    ball_pos2 = ball_pos.copy()
 
-for i in range(len(anchors)):
-    start, end = anchors[i]
-    print(ball_pos[start, 0], ball_pos[end, 0])
-    xx1 = np.linspace(ball_pos[start, 0], ball_pos[end, 0], end - start)
-    yy1 = np.linspace(ball_pos[start, 1], ball_pos[end, 1], end - start)
-    xx2 = np.linspace(ball_pos[start, 2], ball_pos[end, 2], end - start)
-    yy2 = np.linspace(ball_pos[start, 3], ball_pos[end, 3], end - start)
-    ss = np.linspace(ball_pos[start, 4], ball_pos[end, 4], end - start)
+    anchors = []
+    start = - 1
+    end = -1
 
-    ball_pos[start+1:end, :] = np.vstack((xx1[:-1], yy1[:-1], xx2[:-1], yy2[:-1], ss[:-1])).T
+    for i in range(db.n_frames):
+        if ball_pos2[i, -1] == -1 and start == -1:
+            start = i-1
+        if ball_pos2[i, -1] != -1 and start != -1:
+            end = i
+            anchors.append([start, end])
+            start = - 1
+            end = -1
+
+    for i in range(len(anchors)):
+        start, end = anchors[i]
+        xx1 = np.linspace(ball_pos2[start, 0], ball_pos2[end, 0], end - start)
+        yy1 = np.linspace(ball_pos2[start, 1], ball_pos2[end, 1], end - start)
+        xx2 = np.linspace(ball_pos2[start, 2], ball_pos2[end, 2], end - start)
+        yy2 = np.linspace(ball_pos2[start, 3], ball_pos2[end, 3], end - start)
+        ss = np.linspace(ball_pos2[start, 4], ball_pos2[end, 4], end - start)
+
+        ball_pos2[start+1:end, :] = np.vstack((xx1[:-1], yy1[:-1], xx2[:-1], yy2[:-1], ss[:-1])).T
+
+    return ball_pos2
 
 
-for i in range(len(tracks)):
-    plt.plot(ball_pos[:, 0], ball_pos[:, 1], '.')
+ball_pos2 = interpolate_trajectory(ball_pos)
+
+# Apply a
+
+plt.imshow(img)
+plt.plot(ball_pos[:, 0], ball_pos[:, 1], 'o')
+plt.plot(ball_pos2[:, 0], ball_pos2[:, 1], '.-')
 plt.show()
 
 
