@@ -16,11 +16,48 @@ parser.add_argument('--path_to_data', default='/Users/krematas/data/Singleview/S
 opt, _ = parser.parse_known_args()
 
 db = soccer3d.YoutubeVideo(opt.path_to_data)
-# db.gather_detectron()
 db.digest_metadata()
 
 vertex_data, _, _ = io.read_obj('/Users/krematas/data/Singleview/Soccer/field_simple.obj')
 vertex, _, _ = io.ply_to_numpy(vertex_data)
+
+W, H = 52.365, 33.87
+
+
+def get_bottom_params():
+    vertex = np.array([[-W, 0., H],
+                       [W, 0., H],
+                       [W, 0., -H],
+                       [-W, 0., -H]])
+
+    plane_normal = np.array([0, 1, 0])
+    plane_origin = np.array([0, 0, 0])
+
+    return vertex, plane_origin, plane_normal
+
+
+def get_back_params():
+    vertex = np.array([[-W,   0., -H],
+                       [W, 0., -H],
+                       [W, 20., -H],
+                       [-W, 20., -H]])
+
+    plane_normal = np.array([0, 0, 1])
+    plane_origin = np.array([0, 0, -H])
+
+    return vertex, plane_origin, plane_normal
+
+
+def get_right_params():
+    vertex = np.array([[W,   0., -H],
+                       [W, 0., H],
+                       [W, 20., H],
+                       [W, 20., -H]])
+
+    plane_normal = np.array([-1, 0, 0])
+    plane_origin = np.array([0, 0, -H])
+
+    return vertex, plane_origin, plane_normal
 
 
 img = db.get_frame(0)
@@ -29,38 +66,10 @@ calib_data = db.calib[db.frame_basenames[0]]
 cam = cam_utils.Camera('_', calib_data['A'], calib_data['R'], calib_data['T'], db.shape[0], db.shape[1])
 
 name = 'front'
-side = np.zeros((4, 3))
-side[0, :] = [-52.365,   0., -33.87]
-side[1, :] = [52.365,   0., -33.87]
-side[2, :] = [52.365,   20., -33.87]
-side[3, :] = [-52.365,   20., -33.87]
 
-# side[0, :] = [52.365,   0., -33.87]
-# side[1, :] = [52.365,   0., 33.87]
-# side[2, :] = [52.365,   20., 33.87]
-# side[3, :] = [52.365,   20., -33.87]
-
-vertex = side.copy()
-
-plane_normal = np.array([0, 0, 1])
-plane_origin = np.array([0, 0, -33.87])
-
-# plane_normal = np.array([0, 0, 0])
-# plane_origin = np.array([0, 0, 0])
-#
-# plane_normal = np.array([-1, 0, 0])
-# plane_origin = np.array([52.365, 0, 0])
 
 plane = vertex.copy()
-# plane[0, 0] -= 2
-# plane[1, 0] += 2
-# plane[2, 0] += 2
-# plane[3, 0] -= 2
-#
-# plane[0, 2] += 20
-# plane[1, 2] += 20
-# plane[2, 2] -= 2
-# plane[3, 2] -= 2
+
 
 
 def project_plane_to_image(vertex, cam, plane_origin, plane_normal):
