@@ -2,9 +2,14 @@ import os
 import socket
 import numpy as np
 import glog
+import socket
 
-__all__ = ['extract_basename', 'extract_path', 'get_dataset_info', 'gen_folder_structure']
 
+__all__ = ['extract_basename', 'extract_path', 'get_dataset_info', 'gen_folder_structure', 'get_datapath']
+
+
+def get_hostname():
+    return socket.gethostname()
 
 def extract_basename(filename):
     path, tail = os.path.split(filename)
@@ -23,6 +28,18 @@ def mkdir(path_to_dir):
         os.mkdir(path_to_dir)
     else:
         glog.warning('Dir {0} already exist.'.format(path_to_dir))
+
+
+def get_datapath():
+    hostname = get_hostname()
+    if hostname == 'Konstantinoss-MacBook-Pro.local':
+        return '/Users/krematas/data/'
+    elif hostname == 'karmeliet.cs.washington.edu':
+        return '/home/krematas/Mountpoints/grail/data'
+    elif hostname == 'nescafe.cs.washington.edu' or 'flatwhite.cs.washington.edu':
+        return '/projects/grail/krematas/data'
+    else:
+        raise ValueError('Unknown host!')
 
 
 def get_dataset_info(path_to_dataset, info_file='info.txt'):

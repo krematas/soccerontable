@@ -1,27 +1,11 @@
-import os
-import argparse
 import numpy as np
-import soccer3d
-import utils.files as file_utils
-import utils.io as io
-import utils.camera as cam_utils
 from shapely.geometry import Polygon
 from scipy.spatial import Delaunay
+import utils.camera as cam_utils
 import cv2
-import matplotlib.pyplot as plt
 
 
-parser = argparse.ArgumentParser(description='Calibrate a soccer video')
-parser.add_argument('--path_to_data', default='/Users/krematas/data/Singleview/Soccer/Japan-Something-0', help='path')
-opt, _ = parser.parse_known_args()
-
-db = soccer3d.YoutubeVideo(opt.path_to_data)
-db.digest_metadata()
-
-vertex_data, _, _ = io.read_obj('/Users/krematas/data/Singleview/Soccer/field_simple.obj')
-vertex, _, _ = io.ply_to_numpy(vertex_data)
-
-W, H = 52.365, 33.87
+W, H = 52.365+2, 33.87+3
 
 
 def get_bottom_params():
@@ -55,21 +39,21 @@ def get_right_params():
                        [W, 20., -H]])
 
     plane_normal = np.array([-1, 0, 0])
-    plane_origin = np.array([0, 0, -H])
+    plane_origin = np.array([W, 0, 0])
 
     return vertex, plane_origin, plane_normal
 
 
-img = db.get_frame(0)
-calib_data = db.calib[db.frame_basenames[0]]
+def get_left_params():
+    vertex = np.array([[-W,   0., -H],
+                       [-W, 0., H],
+                       [-W, 20., H],
+                       [-W, 20., -H]])
 
-cam = cam_utils.Camera('_', calib_data['A'], calib_data['R'], calib_data['T'], db.shape[0], db.shape[1])
+    plane_normal = np.array([1, 0, 0])
+    plane_origin = np.array([-W, 0, 0])
 
-name = 'front'
-
-
-plane = vertex.copy()
-
+    return vertex, plane_origin, plane_normal
 
 
 def project_plane_to_image(vertex, cam, plane_origin, plane_normal):
@@ -80,6 +64,8 @@ def project_plane_to_image(vertex, cam, plane_origin, plane_normal):
     # Find intersection between field lines and image borders
     poly1 = Polygon([p2[0, :], p2[1, :], p2[2, :], p2[3, :]])
     poly2 = Polygon([(0, 0), (cam.width, 0), (cam.width, cam.height), (0, cam.height)])
+    if not poly1.intersects(poly2):
+        return None, None, None
     inter_poly = poly1.intersection(poly2)
     xy = inter_poly.exterior.coords.xy
 
@@ -104,43 +90,13 @@ def rectify_image(img, cam, vertex, p2):
 
     field_borders, _ = cam.project(vertex)
     margin = 400
-    image_borders = np.array([[0 + margin, 0 + margin], [db.shape[1] - margin, 0 + margin],
-                              [db.shape[1] - margin, db.shape[0] - margin], [0 + margin, db.shape[0] - margin]])
+    image_borders = np.array([[0 + margin, 0 + margin], [cam.width - margin, 0 + margin],
+                              [cam.width - margin, cam.height - margin], [0 + margin, cam.height - margin]])
 
     M = cv2.getPerspectiveTransform(field_borders.astype(np.float32), image_borders.astype(np.float32))
-    dst = cv2.warpPerspective(filled, M, (db.shape[1], db.shape[0]), )
+    dst = cv2.warpPerspective(filled, M, (cam.width, cam.height), )
 
     transformed_p2 = cv2.perspectiveTransform(np.array([p2], dtype=np.float32), M)
     transformed_p2 = transformed_p2[0, :]
 
     return dst, transformed_p2
-
-
-points3d, uv, faces = project_plane_to_image(plane, cam, plane_origin, plane_normal)
-p2, _ = cam.project(points3d)
-
-dst, transformed_p2 = rectify_image(img, cam, vertex, p2)
-
-plt.imshow(dst)
-plt.triplot(transformed_p2[:, 0], transformed_p2[:,1], faces)
-plt.show()
-
-
-cv2.imwrite('/Users/krematas/data/Singleview/field3D/{0}.jpg'.format(name), dst[:, :, ::-1])
-
-vertex_data_out = io.numpy_to_ply(points3d)
-uv = transformed_p2.copy()
-uv[:, 0] = uv[:, 0] / db.shape[1]
-uv[:, 1] = 1 - uv[:, 1] / db.shape[0]
-
-io.write_obj('/Users/krematas/data/Singleview/field3D/{0}.obj'.format(name), vertex_data_out, faces, uv, '{0}.jpg'.format(name))
-
-
-
-# plt.imshow(img)
-# # plt.plot(xy[0], xy[1])
-# plt.plot(_p2[:, 0], _p2[:, 1], 'o')
-# plt.triplot(_p2[:,0], _p2[:,1], faces)
-# plt.show()
-
-# io.imshow(img, points=p2)
