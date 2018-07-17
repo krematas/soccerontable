@@ -9,7 +9,8 @@ from scipy.optimize import minimize
 
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
-parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Netherlands-Japan-0', help='path')
+parser.add_argument('--path_to_data',
+                    default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-2', help='path')
 parser.add_argument('--openpose_dir', default='/home/krematas/code/openpose', help='path')
 opt, _ = parser.parse_known_args()
 
@@ -130,111 +131,20 @@ def interpolate_trajectory(ball_pos):
 
 ball_pos2 = interpolate_trajectory(ball_pos)
 
-# Apply a
+# Check if there is frames without points
+rm = (ball_pos2[:, 4] == -1).nonzero()[0]
+if len(rm) > 0:
+    ball_pos2[rm, :] = ball_pos2[rm[0]-1, :]
 
 plt.imshow(img)
 plt.plot(ball_pos[:, 0], ball_pos[:, 1], 'o')
 plt.plot(ball_pos2[:, 0], ball_pos2[:, 1], '.-')
 plt.show()
 
+for i, k in enumerate(db.frame_basenames):
+    db.ball[k] = np.array([ball_pos2[i, :]])
 
+path_to_save = db.path_to_dataset + '/metadata/ball.npy'
+np.save(path_to_save, db.ball)
 
-# # Perform template matching
-# io.show_box(img, ball_pos[0, :])
-#
-# ball = ball_pos[0, :]
-# x1, y1, x2, y2 = ball[:4].astype(int)
-# ball_img = img[y1:y2, x1:x2, :]
-#
-# ball_pos2 = np.zeros((db.n_frames, 5))
-# ball_pos2[0, :] = ball
-#
-# counter = 1
-# # Start tracking the ball
-# for fname in db.frame_basenames[1:]:
-#     if len(db.ball[fname]) > 0:
-#         # Find the closest ball based on distance
-#         candit_balls = db.ball[fname]
-#         dist = np.linalg.norm(candit_balls - ball, axis=1)
-#         closest = np.argmin(dist)
-#         sel_ball = candit_balls[closest, :]
-#         sel_ball[4] = counter
-#         ball_pos2[counter, :] = sel_ball
-#
-#     counter += 1
-#
-#
-#
-#
-#
-#
-# def _fun(params, detections, valid_index, time_index, traj_length, a=0.01, b=0.1, c=0.1):
-#     X_ = np.reshape(params, (2, traj_length))
-#     E_det = np.sum(np.linalg.norm(X_[:, valid_index] - detections[:, valid_index], axis=0))
-#     temporal_term = X_[:, time_index[0, :]] - 2 * X_[:, time_index[1, :]] + X_[:, time_index[2, :]]
-#     E_dyn = np.sum(np.linalg.norm(temporal_term, axis=0))
-#     E_vel = np.sum(np.linalg.norm(X_[:, time_index[0, :]] - X_[:, time_index[1, :]], axis=0))
-#     return a * E_det + b*E_dyn + c*E_vel
-#
-#
-# time_index = np.array([range(0, db.n_frames - 2), range(0 + 1, db.n_frames - 1), range(0 + 2, db.n_frames)])
-#
-# detection_points = ball_pos[:, :2].T
-# params = detection_points.copy()
-#
-# res = minimize(_fun, params, args=(detection_points, valid, time_index, db.n_frames), method='L-BFGS-B',
-#                options={'gtol': 1e-6, 'disp': False, 'maxiter': 500})
-# smoothed_positions = np.reshape(res.x, (2, db.n_frames)).T
-#
-#
-# plt.imshow(img)
-# for i in range(len(tracks)):
-#     plt.plot(smoothed_positions[:, 0], smoothed_positions[:, 1], '.')
-# plt.show()
-#
-
-
-
-
-
-
-
-
-# io.show_box(img, db.ball[db.frame_basenames[0]])
-#
-# # Select the ball with the highest score in the first frame
-# ball = db.ball[db.frame_basenames[0]]
-# scores = ball[:, 4]
-# ball = ball[np.argmax(scores), :]
-# x1, y1, x2, y2 = ball[:4].astype(int)
-# ball_img = img[y1:y2, x1:x2, :]
-#
-# ball_pos = np.zeros((db.n_frames, 5))
-# ball_pos[0, :] = ball
-#
-# counter = 1
-# # Start tracking the ball
-# for fname in db.frame_basenames[1:]:
-#     if len(db.ball[fname]) > 0:
-#         # Find the closest ball based on distance
-#         candit_balls = db.ball[fname]
-#         dist = np.linalg.norm(candit_balls - ball, axis=1)
-#         closest = np.argmin(dist)
-#         sel_ball = candit_balls[closest, :]
-#         sel_ball[4] = counter
-#         ball_pos[counter, :] = sel_ball
-#
-#     counter += 1
-#
-# io.show_box(img, ball_pos)
-# # Get all points
-# pos2d = np.zeros((db.n_frames, 2))
-# valid = []
-#
-# for fname in db.frame_basenames:
-#     if len(db.ball[fname]) > 0:
-#         db.ball[fname] = np.array([db.ball[fname]])
-#         bbox = db.ball[fname]
-#         x1, y1, x2, y2 = bbox[0, :4].astype(int)
-
-
+# db.dump_video('detections')

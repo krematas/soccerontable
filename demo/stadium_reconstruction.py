@@ -79,11 +79,12 @@ for vertex, plane_origin, plane_normal in stadium_params:
     # plt.triplot(transformed_p2[:, 0], transformed_p2[:,1], faces)
     # plt.show()
 
+file_utils.mkdir(join(db.path_to_dataset, 'field'))
 atlas, final_uvs = misc_utils.pack_textures(imgs, uvs)
-cv2.imwrite(join(file_utils.get_datapath(), 'Singleview/field3D/{0}.jpg'.format(name)), atlas[:, :, ::-1])
+cv2.imwrite(join(db.path_to_dataset, 'field', '{0}.jpg'.format(name)), atlas[:, :, ::-1])
 
 vertex_data_out = io.numpy_to_ply(vertices)
-io.write_obj(join(file_utils.get_datapath(), 'Singleview/field3D/{0}.obj'.format(name)), vertex_data_out, faces, final_uvs, '{0}.jpg'.format(name))
+io.write_obj(join(db.path_to_dataset, 'field', '{0}.obj'.format(name)), vertex_data_out, faces, final_uvs, '{0}.jpg'.format(name))
 
 
 
