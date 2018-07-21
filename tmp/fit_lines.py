@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data',
-                    default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-2', help='path')
+                    default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Netherlands-Japan-0', help='path')
 parser.add_argument('--openpose_dir', default='/home/krematas/code/openpose', help='path')
 opt, _ = parser.parse_known_args()
 
@@ -145,6 +145,6 @@ for i, k in enumerate(db.frame_basenames):
     db.ball[k] = np.array([ball_pos2[i, :]])
 
 path_to_save = db.path_to_dataset + '/metadata/ball.npy'
-np.save(path_to_save, db.ball)
+# np.save(path_to_save, db.ball)
 
 # db.dump_video('detections')
