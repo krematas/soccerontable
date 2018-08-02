@@ -37,15 +37,16 @@ import numpy as np
 
 from caffe2.python import workspace
 
-from core.config import assert_and_infer_cfg
-from core.config import cfg
-from core.config import merge_cfg_from_file
-from utils.timer import Timer
-import core.test_engine as infer_engine
-import datasets.dummy_datasets as dummy_datasets
-import utils.c2 as c2_utils
-import utils.logging
-import utils.vis as vis_utils
+from detectron.utils.io import cache_url
+from detectron.core.config import assert_and_infer_cfg
+from detectron.core.config import cfg
+from detectron.core.config import merge_cfg_from_file
+from detectron.utils.timer import Timer
+import detectron.core.test_engine as infer_engine
+import detectron.datasets.dummy_datasets as dummy_datasets
+import detectron.utils.c2 as c2_utils
+from detectron.utils.logging import setup_logging
+import detectron.utils.vis as vis_utils
 import pycocotools.mask as mask_util
 
 
@@ -97,10 +98,11 @@ def parse_args():
 def main(args):
     logger = logging.getLogger(__name__)
     merge_cfg_from_file(args.cfg)
-    cfg.TEST.WEIGHTS = args.weights
+    # cfg.TEST.WEIGHTS = args.weights
     cfg.NUM_GPUS = 1
-    assert_and_infer_cfg()
-    model = infer_engine.initialize_model_from_cfg()
+    args.weights = cache_url(args.weights, cfg.DOWNLOAD_CACHE)
+    assert_and_infer_cfg(cache_urls=False)
+    model = infer_engine.initialize_model_from_cfg(args.weights)
     dummy_coco_dataset = dummy_datasets.get_coco_dataset()
 
     if os.path.isdir(args.im_or_folder):
@@ -141,7 +143,7 @@ def main(args):
 
         logger.info('Inference time: {:.3f}s'.format(time.time() - t))
 
-        if i == 0:
+        if ii == 0:
             logger.info(
                 ' \ Note: inference on the first image will be slower than the '
                 'rest (caches and auto-tuning need to warm up)'
@@ -187,7 +189,7 @@ def main(args):
         )
         cv2.imwrite(out_name_mask, _mask*255)
 
-        with open(out_name_yml, 'w') as outfile:
+        with open(out_name_yml, 'a+') as outfile:
             yaml.dump({'boxes': all_boxes,
                        'segms': all_segs,
                        'classes': all_classes}, outfile, default_flow_style=False)
@@ -214,6 +216,6 @@ def main(args):
 
 if __name__ == '__main__':
     workspace.GlobalInit(['caffe2', '--caffe2_log_level=0'])
-    utils.logging.setup_logging(__name__)
+    setup_logging(__name__)
     args = parse_args()
     main(args)
