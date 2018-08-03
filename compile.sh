@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 cur=$PWD
 cd utils/nms
-make -j4
+python3 setup.py build_ext --inplace --force
+#make -j4
 cd ${cur}
 
 cd soccer3d/instancesegm
