@@ -11,7 +11,7 @@ import utils.misc as misc_utils
 import utils.draw as draw_utils
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
-parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-1', help='path')
+parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Japan-Something-2', help='path')
 opt, _ = parser.parse_known_args()
 
 db = soccer3d.YoutubeVideo(opt.path_to_data)
