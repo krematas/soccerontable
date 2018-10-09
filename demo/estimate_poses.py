@@ -14,7 +14,7 @@ db.gather_detectron()
 db.digest_metadata()
 
 db.get_boxes_from_detectron()
-db.dump_video('detections')
+# db.dump_video('detections')
 
 db.estimate_poses(openpose_dir=opt.openpose_dir)
 db.refine_poses(keypoint_thresh=7, score_thresh=0.4, neck_thresh=0.4)

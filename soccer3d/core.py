@@ -16,6 +16,7 @@ import yaml
 import matplotlib
 import pycocotools.mask as mask_util
 from utils.nms.nms_wrapper import nms
+import json
 
 
 class Player:
@@ -253,9 +254,7 @@ class YoutubeVideo:
 
                 cwd = os.getcwd()
                 os.chdir(openpose_dir)
-                command = '{0} --model_pose COCO --image_dir {1} --write_keypoint {2} --no_display'.format(openposebin,
-                                                                                                           tmp_dir,
-                                                                                                           tmp_dir)
+                command = '{0} --model_pose COCO --image_dir {1} --write_json {2} --model_folder {3}'.format(openposebin, tmp_dir, tmp_dir, openpose_dir+'models')
 
                 os.system(command)
                 os.chdir(cwd)
@@ -266,19 +265,19 @@ class YoutubeVideo:
                     x1, y1 = int(np.maximum(np.minimum(x1 - pad, w - 1), 0)), int(
                         np.maximum(np.minimum(y1 - pad, h - 1), 0))
 
-                    with open(join(join(self.path_to_dataset, 'tmp'), '{0}_pose.yml'.format(j))) as data_file:
-                        for iii in range(2):
-                            _ = data_file.readline()
-                        data_yml = yaml.load(data_file)
+                    with open(join(join(self.path_to_dataset, 'tmp'), '{0}_keypoints.json'.format(j))) as data_file:
+                        # for iii in range(2):
+                        #     _ = data_file.readline()
+                        data_json = json.load(data_file)
 
-                        if 'sizes' not in data_yml:
+                        if len(data_json['people']) == 0:
                             continue
-                        sz = data_yml['sizes']
-                        n_persons = sz[0]
-                        keypoints = np.array(data_yml['data']).reshape(sz)
+                        # sz = data_json['sizes']
+                        n_persons = len(data_json['people'])
+                        # keypoints = np.array(data_json['data']).reshape(sz)
 
                         for k in range(n_persons):
-                            keypoints_ = keypoints[k, :, :]
+                            keypoints_ = np.array(data_json['people'][k]['pose_keypoints_2d']).reshape((18, 3))
                             keypoints_[:, 0] += x1
                             keypoints_[:, 1] += y1
                             poses.append(keypoints_)

@@ -80,7 +80,7 @@ for i in tqdm(range(len(new_tracklets))):
     smoothed_positions = smooth_trajectory(new_tracklets[i], neck_pos)
     for j in range(len(new_tracklets[i])):
         data_out[new_tracklets[i][j].frame].append({'mesh': new_tracklets[i][j].mesh_name, 'x': smoothed_positions[0, j],
-                                                    'y': smoothed_positions[1, j], 'z': smoothed_positions[2, j]})
+                                                    'y': smoothed_positions[1, j], 'z': smoothed_positions[2, j], 'id': i})
 
     ax.plot(smoothed_positions[0, :], smoothed_positions[2, :], 'o')
 
