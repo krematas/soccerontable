@@ -14,6 +14,7 @@ from soccer3d.soccerdepth.data.transforms import *
 from torchvision import transforms
 from visdom import Visdom
 from tqdm import tqdm
+import time
 
 
 warnings.filterwarnings("ignore")
@@ -61,6 +62,7 @@ testing_data_loader = DataLoader(dataset=test_set, num_workers=8, batch_size=1, 
 
 logsoftmax = nn.LogSoftmax()
 
+start = time.time()
 for iteration, batch in enumerate(tqdm(testing_data_loader)):
 
     input, target, mask = Variable(batch['image']).float(), Variable(batch['target']).long(), Variable(batch['mask']).float()
@@ -96,4 +98,7 @@ for iteration, batch in enumerate(tqdm(testing_data_loader)):
     # Save predictions
     fname = testing_data_loader.dataset.image_filenames[iteration]
     basename, ext = file_utils.extract_basename(fname)
-    np.save(join(path_to_data, 'predictions', basename), final_prediction.cpu().data.numpy())
+    # np.save(join(path_to_data, 'predictions', basename), final_prediction.cpu().data.numpy())
+end = time.time()
+
+print('Total time for vanilla depth estimation: {0:.3f}'.format(end-start))
