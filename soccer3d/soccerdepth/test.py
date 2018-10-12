@@ -14,6 +14,7 @@ from soccer3d.soccerdepth.data.transforms import *
 from torchvision import transforms
 from visdom import Visdom
 from tqdm import tqdm
+import time
 
 
 warnings.filterwarnings("ignore")
@@ -39,9 +40,10 @@ opt, _ = parser.parse_known_args()
 opt.cuda = True
 
 viz = Visdom()
-win0 = viz.images(np.ones((1, 3, 256, 256)))
-win1 = viz.images(np.ones((1, 3, 256, 256)))
-win2 = viz.images(np.ones((1, 3, 256, 256)))
+if viz.check_connection():
+    win0 = viz.images(np.ones((1, 3, 256, 256)))
+    win1 = viz.images(np.ones((1, 3, 256, 256)))
+    win2 = viz.images(np.ones((1, 3, 256, 256)))
 
 print(opt)
 
@@ -61,6 +63,7 @@ testing_data_loader = DataLoader(dataset=test_set, num_workers=8, batch_size=1, 
 
 logsoftmax = nn.LogSoftmax()
 
+start = time.time()
 for iteration, batch in enumerate(tqdm(testing_data_loader)):
 
     input, target, mask = Variable(batch['image']).float(), Variable(batch['target']).long(), Variable(batch['mask']).float()
@@ -77,23 +80,28 @@ for iteration, batch in enumerate(tqdm(testing_data_loader)):
 
     img, prediction, label, mask = convert_test_prediction(input, mask, target, final_prediction)
 
-    viz.image(
-        img.transpose(2, 0, 1)*mask[0, :, :, :],
-        win=win0,
-        opts=dict(title='Testing {0}: Input image'.format(opt.dataset))
-    )
-    viz.heatmap(
-        prediction[::-1, :],
-        win=win1,
-        opts=dict(title='Testing {0}: Depth estimation'.format(opt.dataset))
-    )
-    viz.heatmap(
-        label[::-1, :],
-        win=win2,
-        opts=dict(title='Testing {0}: Label'.format(opt.dataset))
-    )
+    if viz.check_connection():
+
+        viz.image(
+            img.transpose(2, 0, 1)*mask[0, :, :, :],
+            win=win0,
+            opts=dict(title='Testing {0}: Input image'.format(opt.dataset))
+        )
+        viz.heatmap(
+            prediction[::-1, :],
+            win=win1,
+            opts=dict(title='Testing {0}: Depth estimation'.format(opt.dataset))
+        )
+        viz.heatmap(
+            label[::-1, :],
+            win=win2,
+            opts=dict(title='Testing {0}: Label'.format(opt.dataset))
+        )
 
     # Save predictions
     fname = testing_data_loader.dataset.image_filenames[iteration]
     basename, ext = file_utils.extract_basename(fname)
-    np.save(join(path_to_data, 'predictions', basename), final_prediction.cpu().data.numpy())
+    # np.save(join(path_to_data, 'predictions', basename), final_prediction.cpu().data.numpy())
+end = time.time()
+
+print('Total time for vanilla depth estimation: {0:.3f}'.format(end-start))
