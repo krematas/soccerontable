@@ -254,7 +254,7 @@ class YoutubeVideo:
 
                 cwd = os.getcwd()
                 os.chdir(openpose_dir)
-                command = '{0} --model_pose COCO --image_dir {1} --write_json {2} --model_folder {3} --display 0 --render_pose 0'.format(openposebin, tmp_dir, tmp_dir, openpose_dir+'models')
+                command = '{0} --model_pose COCO --net_resolution -1x176 --image_dir {1} --write_json {2} --model_folder {3} --display 0 --render_pose 0'.format(openposebin, tmp_dir, tmp_dir, openpose_dir+'models')
 
                 os.system(command)
                 os.chdir(cwd)
