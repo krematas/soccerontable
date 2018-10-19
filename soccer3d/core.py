@@ -17,6 +17,33 @@ import matplotlib
 import pycocotools.mask as mask_util
 from utils.nms.nms_wrapper import nms
 import json
+import torch.utils.data as data
+from torch.utils.data import DataLoader
+from scipy.misc import imread
+
+
+def is_image_file(filename):
+    return any(filename.endswith(extension) for extension in [".png", ".jpg", ".jpeg"])
+
+
+def get_set(train_dir):
+    return ImagesFromFolder(train_dir)
+
+
+class ImagesFromFolder(data.Dataset):
+
+    def __init__(self, data_dir):
+        super(ImagesFromFolder, self).__init__()
+        self.image_filenames = [join(data_dir, 'images',  x) for x in listdir(join(data_dir, 'images')) if is_image_file(x)]
+        self.image_filenames.sort()
+
+    def __getitem__(self, index):
+        input = imread(self.image_filenames[index])
+        sample = {'image': input}
+        return sample
+
+    def __len__(self):
+        return len(self.image_filenames)
 
 
 class Player:
@@ -29,7 +56,7 @@ class Player:
 
 class YoutubeVideo:
 
-    def __init__(self, path_to_dataset):
+    def __init__(self, path_to_dataset, height=2160, width=3840):
         image_extensions = ['jpg', 'png']
 
         # Load images
@@ -52,6 +79,12 @@ class YoutubeVideo:
         self.detectron = {f: None for f in self.frame_basenames}
         self.ball = {f: None for f in self.frame_basenames}
         self.tracks = None
+
+        image_set = ImagesFromFolder(path_to_dataset)
+        self.image_data_loader = DataLoader(dataset=image_set, num_workers=8, batch_size=1, shuffle=False)
+        self.images = np.zeros((self.n_frames, height, width, 3), dtype=np.uint8)
+        for i, img_data in enumerate(self.image_data_loader):
+            self.images[i, :, :, :] = img_data['image']
 
         # Make the txt file
         txt_file = join(path_to_dataset, 'youtube.txt')
@@ -85,7 +118,12 @@ class YoutubeVideo:
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_frame(self, frame_number, dtype=np.float32, sfactor=1.0, image_type='rgb'):
-        return io.imread(self.frame_fullnames[frame_number], dtype=dtype, sfactor=sfactor, image_type=image_type)
+        img = self.images[frame_number, :, :, :]
+        if sfactor != 1.0:
+            img = cv2.resize(img, fx=sfactor, fy=sfactor)
+        # img = img.astype(dtype)
+        return img
+        # return io.imread(self.frame_fullnames[frame_number], dtype=dtype, sfactor=sfactor, image_type=image_type)
 
     def get_frame_index(self, frame_name):
         return self.frame_basenames.index(frame_name)
