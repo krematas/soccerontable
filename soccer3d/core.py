@@ -14,7 +14,7 @@ import cv2
 from tqdm import tqdm
 import yaml
 import matplotlib
-import pycocotools.mask as mask_util
+import utils.cocoapi.PythonAPI.pycocotools.mask as mask_util
 from utils.nms.nms_wrapper import nms
 import json
 import torch.utils.data as data
