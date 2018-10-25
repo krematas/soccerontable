@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # Copyright (c) 2017-present, Facebook, Inc.
 #
@@ -37,19 +37,21 @@ import numpy as np
 
 from caffe2.python import workspace
 
-from core.config import assert_and_infer_cfg
-from core.config import cfg
-from core.config import merge_cfg_from_file
-from utils.timer import Timer
-import core.test_engine as infer_engine
-import datasets.dummy_datasets as dummy_datasets
-import utils.c2 as c2_utils
-import utils.logging
-import utils.vis as vis_utils
+from detectron.core.config import assert_and_infer_cfg
+from detectron.core.config import cfg
+from detectron.core.config import merge_cfg_from_file
+from detectron.utils.io import cache_url
+from detectron.utils.logging import setup_logging
+from detectron.utils.timer import Timer
+import detectron.core.test_engine as infer_engine
+import detectron.datasets.dummy_datasets as dummy_datasets
+import detectron.utils.c2 as c2_utils
+import detectron.utils.vis as vis_utils
+
 import pycocotools.mask as mask_util
 
-
 c2_utils.import_detectron_ops()
+
 # OpenCL may be enabled by default in OpenCV3; disable it because it's not
 # thread safe and causes unwanted GPU memory allocations.
 cv2.ocl.setUseOpenCL(False)
@@ -86,6 +88,33 @@ def parse_args():
         type=str
     )
     parser.add_argument(
+        '--always-out',
+        dest='out_when_no_box',
+        help='output image even when no object is found',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--output-ext',
+        dest='output_ext',
+        help='output image file format (default: pdf)',
+        default='pdf',
+        type=str
+    )
+    parser.add_argument(
+        '--thresh',
+        dest='thresh',
+        help='Threshold for visualizing detections',
+        default=0.7,
+        type=float
+    )
+    parser.add_argument(
+        '--kp-thresh',
+        dest='kp_thresh',
+        help='Threshold for visualizing keypoints',
+        default=2.0,
+        type=float
+    )
+    parser.add_argument(
         'im_or_folder', help='image or folder of images', default=None
     )
     if len(sys.argv) == 1:
@@ -96,11 +125,18 @@ def parse_args():
 
 def main(args):
     logger = logging.getLogger(__name__)
+
     merge_cfg_from_file(args.cfg)
-    cfg.TEST.WEIGHTS = args.weights
     cfg.NUM_GPUS = 1
-    assert_and_infer_cfg()
-    model = infer_engine.initialize_model_from_cfg()
+    args.weights = cache_url(args.weights, cfg.DOWNLOAD_CACHE)
+    assert_and_infer_cfg(cache_urls=False)
+
+    assert not cfg.MODEL.RPN_ONLY, \
+        'RPN models are not supported'
+    assert not cfg.TEST.PRECOMPUTED_PROPOSALS, \
+        'Models that require precomputed proposals are not supported'
+
+    model = infer_engine.initialize_model_from_cfg(args.weights)
     dummy_coco_dataset = dummy_datasets.get_coco_dataset()
 
     if os.path.isdir(args.im_or_folder):
@@ -108,13 +144,16 @@ def main(args):
     else:
         im_list = [args.im_or_folder]
 
-    for ii, im_name in enumerate(im_list):
+    for i, im_name in enumerate(im_list):
         out_name = os.path.join(
-            args.output_dir, '{}'.format(os.path.basename(im_name) + '.pdf')
+            args.output_dir, '{}'.format(os.path.basename(im_name) + '.' + args.output_ext)
         )
-
         logger.info('Processing {} -> {}'.format(im_name, out_name))
         im = cv2.imread(im_name)
+        timers = defaultdict(Timer)
+        t = time.time()
+
+        # ======================================================================
         h, w = im.shape[:2]
 
         subimages = []
@@ -124,8 +163,6 @@ def main(args):
                 x2, y2 = (x+2)*h//4, (y+2)*w//4
                 subimages.append([x1, y1, x2, y2])
 
-        timers = defaultdict(Timer)
-        t = time.time()
         with c2_utils.NamedCudaScope(0):
             cls_boxes = []
             cls_segms = []
@@ -138,15 +175,19 @@ def main(args):
                 cls_boxes.append(_cls_boxes)
                 cls_segms.append(_cls_segms)
                 cls_keyps.append(_cls_keyps)
+        # ======================================================================
 
         logger.info('Inference time: {:.3f}s'.format(time.time() - t))
-
+        for k, v in timers.items():
+            logger.info(' | {}: {:.3f}s'.format(k, v.average_time))
         if i == 0:
             logger.info(
                 ' \ Note: inference on the first image will be slower than the '
                 'rest (caches and auto-tuning need to warm up)'
             )
 
+
+        # ======================================================================
         t = time.time()
 
         out_name_yml = os.path.join(
@@ -187,33 +228,23 @@ def main(args):
         )
         cv2.imwrite(out_name_mask, _mask*255)
 
+
+
         with open(out_name_yml, 'w') as outfile:
             yaml.dump({'boxes': all_boxes,
                        'segms': all_segs,
                        'classes': all_classes}, outfile, default_flow_style=False)
 
+
         logger.info('Saving time: {:.3f}s'.format(time.time() - t))
         for k, v in timers.items():
             logger.info(' | {}: {:.3f}s'.format(k, v.average_time))
 
-        # break
-        # vis_utils.vis_one_image(
-        #     im[:, :, ::-1],  # BGR -> RGB for visualization
-        #     im_name,
-        #     args.output_dir,
-        #     cls_boxes,
-        #     cls_segms,
-        #     cls_keyps,
-        #     dataset=dummy_coco_dataset,
-        #     box_alpha=0.3,
-        #     show_class=True,
-        #     thresh=0.7,
-        #     kp_thresh=2
-        # )
+        # ======================================================================
 
 
 if __name__ == '__main__':
     workspace.GlobalInit(['caffe2', '--caffe2_log_level=0'])
-    utils.logging.setup_logging(__name__)
+    setup_logging(__name__)
     args = parse_args()
     main(args)
