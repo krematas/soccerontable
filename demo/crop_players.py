@@ -15,10 +15,12 @@ import utils.io as io
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
 parser.add_argument('--margin', type=int, default=0, help='Margin around the pose')
+parser.add_argument('--height', type=int, default=2160, help='Margin around the pose')
+parser.add_argument('--width', type=int, default=3840, help='Margin around the pose')
 opt, _ = parser.parse_known_args()
 
 
-db = soccer3d.YoutubeVideo(opt.path_to_data)
+db = soccer3d.YoutubeVideo(opt.path_to_data, height=opt.height, width=opt.width)
 db.digest_metadata()
 
 db.refine_poses(keypoint_thresh=7, score_thresh=0.4, neck_thresh=0.4)
@@ -50,7 +52,7 @@ for sel_frame in tqdm(range(db.n_frames)):
     cam = cam_utils.Camera(basename, cam_mat['A'], cam_mat['R'], cam_mat['T'], db.shape[0], db.shape[1])
 
     skeleton_buffer = seg_utils.get_instance_skeleton_buffer(db.shape[0], db.shape[1], poses)
-    io.imagesc(skeleton_buffer)
+    # io.imagesc(skeleton_buffer)
 
     h, w = img.shape[:2]
     for i in range(len(poses)):

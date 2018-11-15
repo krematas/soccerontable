@@ -101,7 +101,7 @@ for iteration, batch in enumerate(tqdm(testing_data_loader)):
     # Save predictions
     fname = testing_data_loader.dataset.image_filenames[iteration]
     basename, ext = file_utils.extract_basename(fname)
-    # np.save(join(path_to_data, 'predictions', basename), final_prediction.cpu().data.numpy())
+    np.save(join(path_to_data, 'predictions', basename), final_prediction.cpu().data.numpy())
 end = time.time()
 
 print('Total time for vanilla depth estimation: {0:.3f}'.format(end-start))

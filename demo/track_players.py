@@ -14,10 +14,12 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
 parser.add_argument('--dist_thresh', type=int, default=50, help='Distance threshold for merging tracklets (in pixels)')
+parser.add_argument('--height', type=int, default=2160, help='Margin around the pose')
+parser.add_argument('--width', type=int, default=3840, help='Margin around the pose')
 opt, _ = parser.parse_known_args()
 
 
-db = soccer3d.YoutubeVideo(opt.path_to_data)
+db = soccer3d.YoutubeVideo(opt.path_to_data, height=opt.height, width=opt.width)
 db.digest_metadata()
 
 db.refine_poses(keypoint_thresh=7, score_thresh=0.4, neck_thresh=0.4)

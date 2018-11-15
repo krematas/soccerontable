@@ -16,6 +16,8 @@ import cv2
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
 parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
 parser.add_argument('--decimate_to', type=int, default=500, help='Margin around the pose')
+parser.add_argument('--height', type=int, default=2160, help='Margin around the pose')
+parser.add_argument('--width', type=int, default=3840, help='Margin around the pose')
 opt, _ = parser.parse_known_args()
 
 
@@ -23,7 +25,7 @@ with open(join(opt.path_to_data, 'players', 'metadata', 'position.json')) as f:
     data = json.load(f)
 
 
-db = soccer3d.YoutubeVideo(opt.path_to_data)
+db = soccer3d.YoutubeVideo(opt.path_to_data, height=opt.height, width=opt.width)
 db.digest_metadata()
 
 db.refine_poses(keypoint_thresh=7, score_thresh=0.4, neck_thresh=0.4)

@@ -14,7 +14,7 @@ import cv2
 from tqdm import tqdm
 import yaml
 import matplotlib
-import utils.cocoapi.PythonAPI.pycocotools.mask as mask_util
+import pycocotools.mask as mask_util
 from utils.nms.nms_wrapper import nms
 import json
 import torch.utils.data as data
@@ -118,12 +118,12 @@ class YoutubeVideo:
     # ------------------------------------------------------------------------------------------------------------------
 
     def get_frame(self, frame_number, dtype=np.float32, sfactor=1.0, image_type='rgb'):
-        img = self.images[frame_number, :, :, :]
-        if sfactor != 1.0:
-            img = cv2.resize(img, fx=sfactor, fy=sfactor)
-        # img = img.astype(dtype)
-        return img
-        # return io.imread(self.frame_fullnames[frame_number], dtype=dtype, sfactor=sfactor, image_type=image_type)
+        # img = self.images[frame_number, :, :, :]
+        # if sfactor != 1.0:
+        #     img = cv2.resize(img, fx=sfactor, fy=sfactor)
+        # # img = img.astype(dtype)
+        # return img
+        return io.imread(self.frame_fullnames[frame_number], dtype=dtype, sfactor=sfactor, image_type=image_type)
 
     def get_frame_index(self, frame_name):
         return self.frame_basenames.index(frame_name)
