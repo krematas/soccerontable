@@ -135,7 +135,7 @@ class YoutubeVideo:
 
         calib_file = join(self.path_to_dataset, 'metadata', 'calib.p')
         if exists(calib_file):
-            glog.info('Loading coarse detections from: {0}'.format(calib_file))
+            glog.info('Loading calibration data from: {0}'.format(calib_file))
             with open(calib_file, 'rb') as f:
                 self.calib = pickle.load(f)
 
@@ -158,6 +158,7 @@ class YoutubeVideo:
                 else:
                     np.save(join(self.path_to_dataset, 'calib', '{0}'.format(self.frame_basenames[0])),
                             {'A': A, 'R': R, 'T': T})
+                    return
                     for i in tqdm(range(1, self.n_frames)):
                         # glog.info('Calibrating frame {0} ({1}/{2})'.format(self.frame_basenames[i], i, self.n_frames))
                         img = self.get_frame(i)
