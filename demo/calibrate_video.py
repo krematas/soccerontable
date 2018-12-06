@@ -6,9 +6,11 @@ import utils.files as file_utils
 
 
 parser = argparse.ArgumentParser(description='Calibrate a soccer video')
-parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/barcelona', help='path')
+parser.add_argument('--path_to_data', default='/home/krematas/Mountpoints/grail/data/Singleview/Soccer/Russia2018/denis-cheryshev-goal-russia-egypt', help='path')
 parser.add_argument('--height', type=int, default=2160, help='Margin around the pose')
 parser.add_argument('--width', type=int, default=3840, help='Margin around the pose')
+parser.add_argument('--fps', type=int, default=50, help='Margin around the pose')
+
 
 opt, _ = parser.parse_known_args()
 
@@ -19,4 +21,4 @@ db.digest_metadata()
 file_utils.mkdir(os.path.join(db.path_to_dataset, 'calib'))
 
 db.calibrate_camera()
-# db.dump_video('calib')
+db.dump_video('calib', fps=opt.fps)

@@ -183,7 +183,7 @@ class YoutubeVideo:
 
     # ------------------------------------------------------------------------------------------------------------------
 
-    def dump_video(self, vidtype, scale=4, mot_tracks=None, one_color=True):
+    def dump_video(self, vidtype, scale=4, mot_tracks=None, one_color=True, fps=30):
         if vidtype not in ['calib', 'poses', 'detections', 'tracks', 'mask']:
             raise Exception('Uknown video format')
 
@@ -194,7 +194,7 @@ class YoutubeVideo:
 
         fourcc = cv2.VideoWriter_fourcc(*'MP4V')
         out_file = join(self.path_to_dataset, '{0}.mp4'.format(vidtype))
-        out = cv2.VideoWriter(out_file, fourcc, 20.0, (self.shape[1] // scale, self.shape[0] // scale))
+        out = cv2.VideoWriter(out_file, fourcc, fps, (self.shape[1] // scale, self.shape[0] // scale))
 
         font = cv2.FONT_HERSHEY_SIMPLEX
         cmap = matplotlib.cm.get_cmap('hsv')
@@ -269,12 +269,12 @@ class YoutubeVideo:
             if not exists(tmp_dir):
                 os.mkdir(tmp_dir)
 
-            for i, basename in enumerate(tqdm(self.frame_basenames)):
+            # Remove previous files
+            previous_files = [f for f in os.listdir(tmp_dir)]
+            for f in previous_files:
+                os.remove(join(tmp_dir, f))
 
-                # Remove previous files
-                previous_files = [f for f in os.listdir(tmp_dir)]
-                for f in previous_files:
-                    os.remove(join(tmp_dir, f))
+            for i, basename in enumerate(tqdm(self.frame_basenames)):
 
                 img = self.get_frame(i)
                 bbox = self.bbox[basename]
@@ -289,22 +289,25 @@ class YoutubeVideo:
                     crop = img[y1:y2, x1:x2, :]
 
                     # Save crop
-                    cv2.imwrite(join(self.path_to_dataset, 'tmp', '{0}.jpg'.format(j)), crop[:, :, (2, 1, 0)] * 255)
+                    cv2.imwrite(join(self.path_to_dataset, 'tmp', '{0}_{1}.jpg'.format(basename, j)), crop[:, :, (2, 1, 0)] * 255)
 
-                cwd = os.getcwd()
-                os.chdir(openpose_dir)
-                command = '{0} --model_pose COCO --net_resolution 208x-1 --image_dir {1} --write_json {2} --model_folder {3} --display 0 --render_pose 0'.format(openposebin, tmp_dir, tmp_dir, openpose_dir+'models')
+            cwd = os.getcwd()
+            os.chdir(openpose_dir)
+            command = '{0} --model_pose BODY_25 --net_resolution 208x-1 --image_dir {1} --write_json {2} --model_folder {3} --display 0 --render_pose 0'.format(openposebin, tmp_dir, tmp_dir, openpose_dir+'models')
 
-                os.system(command)
-                os.chdir(cwd)
+            os.system(command)
+            os.chdir(cwd)
 
+            for i, basename in enumerate(tqdm(self.frame_basenames)):
                 poses = []
+                bbox = self.bbox[basename]
+
                 for j in range(bbox.shape[0]):
                     x1, y1, x2, y2 = bbox[j, 0:4]
                     x1, y1 = int(np.maximum(np.minimum(x1 - pad, w - 1), 0)), int(
                         np.maximum(np.minimum(y1 - pad, h - 1), 0))
 
-                    with open(join(join(self.path_to_dataset, 'tmp'), '{0}_keypoints.json'.format(j))) as data_file:
+                    with open(join(join(self.path_to_dataset, 'tmp'), '{0}_{1}_keypoints.json'.format(basename, j))) as data_file:
                         # for iii in range(2):
                         #     _ = data_file.readline()
                         data_json = json.load(data_file)
@@ -316,12 +319,12 @@ class YoutubeVideo:
                         # keypoints = np.array(data_json['data']).reshape(sz)
 
                         for k in range(n_persons):
-                            keypoints_ = np.array(data_json['people'][k]['pose_keypoints_2d']).reshape((18, 3))
+                            keypoints_ = np.array(data_json['people'][k]['pose_keypoints_2d']).reshape((25, 3))
                             keypoints_[:, 0] += x1
                             keypoints_[:, 1] += y1
                             poses.append(keypoints_)
 
-                self.poses[basename] = poses
+                    self.poses[basename] = poses
 
             with open(pose_file_coarse, 'wb') as f:
                 pickle.dump(self.poses, f)

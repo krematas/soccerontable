@@ -212,10 +212,18 @@ def draw_skeleton(keypoints, h, w):
     return output[:, :, 0]
 
 
-def draw_skeleton_on_image(img, poses, cmap_fun, one_color=False, pose_color=None):
-    limps = np.array(
-        [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7], [1, 11], [11, 12], [12, 13], [1, 8],
-         [8, 9], [9, 10], [14, 15], [16, 17], [0, 14], [0, 15], [14, 16], [15, 17], [8, 11], [2, 8], [5, 11]])
+def draw_skeleton_on_image(img, poses, cmap_fun, one_color=False, pose_color=None, model='BODY_25'):
+    if model == 'COCO':
+        limps = np.array(
+            [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7], [1, 11], [11, 12], [12, 13], [1, 8],
+             [8, 9], [9, 10], [14, 15], [16, 17], [0, 14], [0, 15], [14, 16], [15, 17], [8, 11], [2, 8], [5, 11]])
+    elif model == 'BODY_25':
+        limps = np.array(
+            [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7], [1, 8], [8, 9], [9, 10], [10, 11], [11, 24],
+             [11, 22], [22, 23], [8, 12], [12, 13], [13, 14], [14, 21], [14, 19], [19, 20], [0, 15], [0, 16], [15, 17], [16, 18]])
+    else:
+        raise Exception('Uknown body model')
+
 
     for i in range(len(poses)):
         if poses[i] is None:

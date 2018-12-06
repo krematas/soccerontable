@@ -8,6 +8,7 @@ parser.add_argument('--openpose_dir', default='/home/krematas/code/openpose', he
 parser.add_argument('--pad', type=int, default=150, help='pad around players')
 parser.add_argument('--height', type=int, default=2160, help='Margin around the pose')
 parser.add_argument('--width', type=int, default=3840, help='Margin around the pose')
+parser.add_argument('--outscale', type=int, default=4, help='Margin around the pose')
 opt, _ = parser.parse_known_args()
 
 
@@ -21,4 +22,4 @@ db.get_boxes_from_detectron()
 
 db.estimate_poses(openpose_dir=opt.openpose_dir, pad=opt.pad)
 db.refine_poses(keypoint_thresh=7, score_thresh=0.4, neck_thresh=0.4)
-db.dump_video('poses')
+db.dump_video('poses', scale=opt.outscale)
