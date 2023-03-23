@@ -113,7 +113,7 @@ python3 demo/combine_masks_for_network.py --path_to_data $DATADIR
 python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath $MODELPATH
 ```
 
-Next, we convert tje estimated depthmaps to pointclouds.
+Next, we convert the estimated depthmaps to pointclouds.
 ```
 python3 demo/depth_estimation_to_pointcloud.py --path_to_data $DATADIR
 ```
