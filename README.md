@@ -46,13 +46,13 @@ Therefore we break it into individual parts that have specific inputs and output
 (eg png to pickle) and communicate through a python3 class that reads, processes
 and writes the intermediate and final results.  
 
-First, download the repo and install its dependencies
+First, download the repo and install its dependencies.
 ```
 # SOCCERCODE=/path/to/soccercode
 git clone https://github.com/krematas/soccerontable $SOCCERCODE
 pip3 install -r requirements.txt
 ```
-Let's start by downloading an example dataset
+Let's start by downloading an example dataset.
 ```
 wget http://grail.cs.washington.edu/projects/soccer/barcelona.zip
 unzip barcelona.zip
@@ -113,19 +113,19 @@ python3 demo/combine_masks_for_network.py --path_to_data $DATADIR
 python3 soccer3d/soccerdepth/test.py --path_to_data $DATADIR/players --modelpath $MODELPATH
 ```
 
-Next, we convert tje estimated depthmaps to pointclouds.
+Next, we convert the estimated depthmaps to pointclouds.
 ```
 python3 demo/depth_estimation_to_pointcloud.py --path_to_data $DATADIR
 ```
 
-Finally we generate one mesh per frame, with the smooth position of the players, based on tracking. Note that the resolution of the
+Finally, we generate one mesh per frame, with the smooth position of the players, based on tracking. Note that the resolution of the
 mesh is reduced, so later it can easily fit into Hololens.
 ```
 python3 demo/track_players.py --path_to_data $DATADIR
 python3 demo/generate_mesh.py --path_to_data $DATADIR
 ```
 
-Just to be sure that everything is fine, we can have a simple opengl visualization
+Just to be sure that everything is fine, we can have a simple opengl visualization.
 ```
 python3 demo/simple_visualization.py --path_to_data $DATADIR
 ```
